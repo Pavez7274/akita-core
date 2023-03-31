@@ -1,8 +1,11 @@
 import { AkitaClient } from "./client";
-import { Lexer } from "./lexer";
+import { Lexer } from "./old_lexer";
 
-type object_data = object & { input: string };
+export type object_data = object & { input: string };
 
+/**
+ * @deprecated This class is obsolete! now we use a transpilation method
+ */
 export class Interpreter {
     public functions: Record<string, ((data: object_data) => object_data)> = {};
     public readonly lexer: Lexer;

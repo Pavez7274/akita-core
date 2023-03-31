@@ -1,7 +1,8 @@
+import { Dirent, readdirSync } from "fs";
 import { parse, DeserializeOptions } from "hjson";
 import { split } from "lodash";
 
-export class Util {
+export default class Util {
     static readonly operators = [/*"===", "!==",*/ "==", "!=", ">=", "<=", ">", "<"];
     static readonly falsys = ["", "0", "no", "null", "NaN", "void", "none", "false", "undefined"];
     static parse_object(to_solve: string, options?: DeserializeOptions, default_value?: object, suppress = true) {
@@ -55,5 +56,13 @@ export class Util {
     static booleanify(str: string) {
         const number = Number(str);
         return isNaN(number) ? !this.falsys.includes(str) : number > 0;
+    }
+    static get_files(mod: string, result: Dirent[] = []) {
+        const files = readdirSync(mod, { withFileTypes: true });
+        for (const file of files) {
+            file.name = `${mod}/${file.name}`;
+            file.isDirectory() ? this.get_files(file.name, result) : result.push(file);
+        }
+        return result;
     }
 }

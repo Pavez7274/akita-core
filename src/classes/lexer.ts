@@ -7,17 +7,26 @@ export interface matchedFunction {
     pos: number
     len: number
 }
-export interface functionFields {
-    overloads: akitaFunction[]
-    value: string
-}
-export interface akitaFunction {
-    fields?: functionFields[]
-    inside?: string
-    total: string
-    name: string
-    pos: number
-    id: string
+
+export class akitaFunction {
+    public total: string;
+    constructor(
+        public readonly name: string,
+        public readonly id: string
+    ) {
+        this.total = id;
+    }
+    public after(input: string) {
+        return input.slice((input.match(this.id.replace(/(\(|\))/g, "\\$1"))?.index ?? 0) + this.id.length);
+    }
+    public fields(input: string) {
+        const fields = Lexer.lex_inside(this.after(input));
+        this.total += "[" + fields.inside + "]";
+        return fields;
+    }
+    public _fields(input: string) {
+        return Lexer.lex_inside(this.after(input));
+    }
 }
 
 export class Lexer {
@@ -34,23 +43,18 @@ export class Lexer {
     private find_function(x: string) {
         return this.functions.find(f => toLower(f) === toLower(x));
     }
-    private match_functions(): matchedFunction[] {
+    private match(input: string): matchedFunction | null {
         if (isNil(this.regexp)) throw new Error("Expected regex value!");
-        const maches = this.input.matchAll(this.regexp),
-            result: matchedFunction[] = [];
-        for (let i = maches.next(); !isNil(i); i = maches.next()) {
-            if (i.done) break;
-            result.push({
-                name: this.insensitive ? this.find_function(i.value[0]) as string : i.value[0],
-                pos: i.value.index as number,
-                len: i.value[0].length,
-                match: i.value[0]
-            });
-        }
-        return result;
+        const match = input.match(this.regexp);
+        return isNil(match) ? null : {
+            name: this.insensitive ? this.find_function(match[0]) as string : match[0],
+            pos: match.index as number,
+            len: match[0].length,
+            match: match[0]
+        };
     }
-    public static lex_inside(after: string, functions_array: akitaFunction[]) {
-        const fields: functionFields[] = [{ value: "", overloads: [] }];
+    public static lex_inside(after: string) {
+        const fields: string[] = [""];
         let escape = false,
             closed = false,
             inside = "",
@@ -61,64 +65,42 @@ export class Lexer {
                 escape = false;
             } else if (char === "\\") escape = true;
             else if (char === ";") {
-                fields.push({ value: "", overloads: [] });
+                fields.push("");
                 inside += char;
             } else if (char === "]" && depth <= 0) { closed = true; break; }
             else if (char === "[") {
-                fields[fields.length - 1].value += char;
+                fields[fields.length - 1] += char;
                 inside += char;
                 depth++;
             } else if (char === "]" && depth > 0) {
-                fields[fields.length - 1].value += char;
+                fields[fields.length - 1] += char;
                 inside += char;
                 depth--;
             } else {
-                fields[fields.length - 1].value += char;
+                fields[fields.length - 1] += char;
                 inside += char;
             }
         }
-        for (let index = 0; index < fields.length; index++) {
-            const possible_functions = fields[index].value.match(/FUNCTION\(\d+\)/g);
-            if (possible_functions?.length) {
-                for (const possible_function of possible_functions) {
-                    const pos = functions_array.findIndex(n => n.id === possible_function);
-                    if (pos !== -1) {
-                        fields[index].overloads.push(functions_array[pos]);
-                        functions_array.splice(pos, 1);
-                    }
-                }
-            }
-        }
         if (!closed) throw new SyntaxError("Missing ]");
-        return { fields, inside, functions_array };
+        return { fields, inside };
     }
-    public static is_overload(f: akitaFunction, a: akitaFunction[]) {
-        // some abuser
-        return a.some(n => n.fields?.some(m => m.overloads.some(o => o.id === f.id)));
-    }
-    main(debug = false) {
-        const maches = this.match_functions(), functions_array: akitaFunction[] = [];
-        let input = this.input;
-        for (let index = maches.length - 1; index >= 0; index--) {
-            const match = maches[index],
-                akitaFunction: akitaFunction = {
-                    id: `FUNCTION(${index})`,
-                    total: match.name,
-                    name: match.name,
-                    pos: match.pos
-                },
-                after = input.slice(match.pos + match.len);
-            if (after.charAt(0) === "[") {
-                const { fields, inside } = Lexer.lex_inside(after, functions_array);
-                akitaFunction.total += `[${inside}]`;
-                akitaFunction.inside = inside;
-                akitaFunction.fields = fields;
-            }
-            functions_array.unshift(akitaFunction);
-            input = input.slice(0, match.pos) + akitaFunction.id + input.slice(match.pos + akitaFunction.total.length);
+    lex(debug = false) {
+        const functions_array: akitaFunction[] = [];
+        for (let index = 0, match = this.match(this.input); !isNil(match); match = this.match(this.input), index++) {
+            if (isNil(match)) continue;
+            const sysfu = new akitaFunction(match.name, `SYSTEM_FUNCTION(${index})`);
+            functions_array.unshift(sysfu);
+            this.input = this.input.replace(match.match, sysfu.id);
         }
-        debug && console.log(inspect(functions_array, { depth: null, colors: true }));
-        return { functions_array, input };
+        debug && console.log(this.input, "\n", inspect(functions_array, { depth: null, colors: true }));
+        return functions_array;
     }
 }
-new Lexer("$uwu[$ovo[$ovo];123;$ovo]").set_functions(["$uwu", "$ovo"]).main(true);
+
+// TEST
+// const code = "$uwu['aaaaaaaaaaaaa a'];";
+// const lexer = new Lexer(code);
+// lexer.set_functions(["$uwu", "$ovo"]);
+// console.log(
+//     lexer.lex(true)[0].after(lexer.input)
+// );
