@@ -1,17 +1,16 @@
-import { transpilerData } from "../../classes/transpiler";
+import { Interpreter, object_data } from "../../classes/interpreter";
 import { AbstractAkitaFunction } from "../../classes/function";
 import { akitaFunction } from "../../classes/lexer";
-import { isNil } from "lodash";
+import { setTimeout } from "timers/promises";
+import { isNil, noop } from "lodash";
 
-export default class $sleep extends AbstractAkitaFunction {
-    override name = "$sleep";
-    override async solve(self: akitaFunction, data: transpilerData): Promise<transpilerData> {
-        const { fields } = self.fields(data.input);
-        if (isNil(fields)) throw new Error("$sleep require brackets");
-        data.imports.includes("var { setTimeout } = require(\"timers/promises\");")
-            || (data.imports += "var { setTimeout } = require(\"timers/promises\");");
-        data.returns[self.id] = `await setTimeout(${fields.join(",")})`;
-        data.input = data.input.replace(self.total, `SYSTEM_RESULT("${self.id}")`);
+export default class sleep extends AbstractAkitaFunction {
+    override name = "@sleep";
+    override async solve(self: akitaFunction, data: object_data): Promise<object_data> {
+        if (isNil(self.fields)) throw new Error("@sleep require brackets");
+        await Interpreter.solve_fields(data, self);
+        await setTimeout(Number(self.fields[0].value), noop);
+        data.input = data.input.replace(self.id, "true");
         return data;
     }
 }

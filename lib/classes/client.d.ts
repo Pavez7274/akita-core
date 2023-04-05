@@ -1,8 +1,8 @@
-import { Client, ClientOptions } from "discord.js";
-export interface akitaClientOptions extends ClientOptions {
+import { Client, ClientOptions } from "oceanic.js";
+export declare type akitaClientOptions = ClientOptions & {
     prefix?: string | string[];
     insensitive?: boolean;
-}
+};
 export declare class AkitaClient extends Client {
     readonly __options__: akitaClientOptions;
     prefix: string | string[] | null;

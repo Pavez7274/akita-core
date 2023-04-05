@@ -1,14 +1,19 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { AkitaClient } from "./client";
 import { Lexer } from "./lexer";
 import Util from "./util";
 
 export interface transpilerData {
-    returns: { [k: string]: unknown }
+    returns: { [k: string]: string }
     imports: string
     input: string
 }
 
+/**
+ * @deprecated
+ */
 export class Transpiler {
     static functions: Record<string, AbstractAkitaFunction> = {};
     public readonly lexer: Lexer;
@@ -27,14 +32,17 @@ export class Transpiler {
     }
     public async parse(data: transpilerData = { input: this.input, imports: "", returns: {} }) {
         console.log("[ DEBUG ] Provided code:", data.input ?? this.input);
-        const arr = this.lexer.lex();
+        const { functions_array } = this.lexer.main();
         data.input = this.lexer.input;
         data.imports ??= "";
         data.returns ??= {};
-        for (const akitaFunction of arr) {
+        for (const akitaFunction of functions_array) {
             const finded = Transpiler.functions[akitaFunction.name];
             data = await finded.solve(akitaFunction, data);
         }
         console.log(data);
+        return data.imports.concat("\n",
+            data.input.replace(/SYSTEM_RESULT\("(.*?)"\)/g, (a, m) => data.returns[m] || a)
+        );
     }
 }

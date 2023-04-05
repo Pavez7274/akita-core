@@ -1,12 +1,12 @@
 /* eslint-disable no-undef */
-const { Transpiler } = require("./lib/classes/transpiler");
+const { Interpreter } = require("./lib/classes/interpreter");
 const { cwd } = require("process");
 
 void async function main() {
-    await Transpiler.load_functions(cwd() + "/lib/functions/");
+    await Interpreter.load_functions(cwd() + "/lib/functions/");
     // console.log(Object.values(Transpiler.functions).map(n => n.solve.toString()));
-    const tsr = new Transpiler("$sleep[30_000; $log[hi, i sleep 30s]]");
-    await tsr.parse();
+    const itr = new Interpreter("@try(@throw(hola)|@log(lol)|@log(finally hi))");
+    console.log(await itr.solve({ input: "" }));
 }();
 
 // import { createInterface } from "readline/promises";

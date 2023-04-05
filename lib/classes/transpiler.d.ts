@@ -3,7 +3,7 @@ import { AkitaClient } from "./client";
 import { Lexer } from "./lexer";
 export interface transpilerData {
     returns: {
-        [k: string]: unknown;
+        [k: string]: string;
     };
     imports: string;
     input: string;
@@ -15,6 +15,6 @@ export declare class Transpiler {
     readonly lexer: Lexer;
     constructor(input: string, client?: AkitaClient | undefined);
     static load_functions(mod: string): Promise<void>;
-    parse(data?: transpilerData): Promise<void>;
+    parse(data?: transpilerData): Promise<string>;
 }
 //# sourceMappingURL=transpiler.d.ts.map

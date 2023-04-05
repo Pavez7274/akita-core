@@ -1,6 +1,7 @@
 import { Dirent, readdirSync } from "fs";
 import { parse, DeserializeOptions } from "hjson";
 import { split } from "lodash";
+import { transpilerData } from "./transpiler";
 
 export default class Util {
     static readonly operators = [/*"===", "!==",*/ "==", "!=", ">=", "<=", ">", "<"];
@@ -64,5 +65,11 @@ export default class Util {
             file.isDirectory() ? this.get_files(file.name, result) : result.push(file);
         }
         return result;
+    }
+    static interpolate_strig(field: string, data: transpilerData) {
+        return field.includes("SYSTEM_RESULT")
+            ? "`" + field.replace(/SYSTEM_RESULT\("(.*?)"\)/g, (_, m) => `\${${data.returns[m]}}`)
+                .replace(/"/g, "\\\"") + "`" :
+            `"${field.replace(/"/g, "\\\"")}"`;
     }
 }

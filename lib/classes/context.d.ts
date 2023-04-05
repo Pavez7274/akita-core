@@ -1,11 +1,12 @@
-import { BaseInteraction, MessageReaction, ImageURLOptions, GuildMember, Message, Channel, Guild, User } from "discord.js";
+import { BaseInteraction, MessageReaction, Message, Channel, Guild } from "discord.js";
+import { User, Member } from "oceanic.js";
 export declare class ContextUser {
     private readonly data;
-    constructor(data: User | GuildMember);
+    constructor(data: User | Member);
     private get __user__();
     get default_avatar(): string;
     get creation(): {
-        timestamp: number;
+        timestamp: Date;
         date: Date;
     };
     get discrim(): string;
@@ -14,11 +15,11 @@ export declare class ContextUser {
     get system(): boolean;
     get bot(): boolean;
     get id(): string;
-    avatar(options?: ImageURLOptions, dinamyc?: boolean): string;
-    banner(options?: ImageURLOptions): string | null;
-    accent_color(dinamyc?: boolean): number | null;
-    hex_color(dinamyc?: boolean): `#${string}` | null;
-    get nick(): string | null;
+    avatar(format?: "jpg" | "jpeg" | "png" | "webp" | "gif", dinamyc?: boolean): string;
+    banner(): string | null;
+    accent_color(dinamyc?: boolean): any;
+    hex_color(dinamyc?: boolean): any;
+    get nick(): any;
 }
 export declare class Context {
     readonly data: Message | BaseInteraction | MessageReaction | Guild | Channel;

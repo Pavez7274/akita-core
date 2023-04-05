@@ -4,20 +4,17 @@ export interface matchedFunction {
     pos: number;
     len: number;
 }
-export declare class akitaFunction {
-    readonly name: string;
-    readonly id: string;
+export interface functionFields {
+    overloads: akitaFunction[];
+    value: string;
+}
+export interface akitaFunction {
+    fields?: functionFields[];
+    inside?: string;
     total: string;
-    constructor(name: string, id: string);
-    after(input: string): string;
-    fields(input: string): {
-        fields: string[];
-        inside: string;
-    };
-    _fields(input: string): {
-        fields: string[];
-        inside: string;
-    };
+    name: string;
+    pos: number;
+    id: string;
 }
 export declare class Lexer {
     input: string;
@@ -27,11 +24,15 @@ export declare class Lexer {
     constructor(input: string, insensitive?: boolean);
     set_functions(functions: string[]): this;
     private find_function;
-    private match;
-    static lex_inside(after: string): {
-        fields: string[];
+    private match_functions;
+    static lex_inside(after: string, functions_array: Array<akitaFunction>): {
+        fields: functionFields[];
         inside: string;
+        functions_array: akitaFunction[];
     };
-    lex(debug?: boolean): akitaFunction[];
+    main(debug?: boolean): {
+        functions_array: akitaFunction[];
+        input: string;
+    };
 }
 //# sourceMappingURL=lexer.d.ts.map

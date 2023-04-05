@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { Dirent } from "fs";
 import { DeserializeOptions } from "hjson";
+import { transpilerData } from "./transpiler";
 export default class Util {
     static readonly operators: string[];
     static readonly falsys: string[];
@@ -14,5 +15,6 @@ export default class Util {
     static solve_condition(sentence: string, suppress?: boolean): boolean;
     static booleanify(str: string): boolean;
     static get_files(mod: string, result?: Dirent[]): Dirent[];
+    static interpolate_strig(field: string, data: transpilerData): string;
 }
 //# sourceMappingURL=util.d.ts.map

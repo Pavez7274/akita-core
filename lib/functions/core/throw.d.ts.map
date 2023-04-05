@@ -1,0 +1,1 @@
+{"version":3,"file":"throw.d.ts","sourceRoot":"","sources":["../../../src/functions/core/throw.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,WAAW,EAAE,MAAM,2BAA2B,CAAC;AACrE,OAAO,EAAE,qBAAqB,EAAE,MAAM,wBAAwB,CAAC;AAC/D,OAAO,EAAE,aAAa,EAAE,MAAM,qBAAqB,CAAC;AAGpD,MAAM,CAAC,OAAO,OAAO,MAAO,SAAQ,qBAAqB;IAC5C,IAAI,SAAY;IACV,KAAK,CAAC,IAAI,EAAE,aAAa,EAAE,IAAI,EAAE,WAAW;CAQ9D"}

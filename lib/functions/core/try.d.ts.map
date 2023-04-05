@@ -1,0 +1,1 @@
+{"version":3,"file":"try.d.ts","sourceRoot":"","sources":["../../../src/functions/core/try.ts"],"names":[],"mappings":"AAAA,OAAO,EAAe,WAAW,EAAE,MAAM,2BAA2B,CAAC;AACrE,OAAO,EAAE,qBAAqB,EAAE,MAAM,wBAAwB,CAAC;AAC/D,OAAO,EAAE,aAAa,EAAE,MAAM,qBAAqB,CAAC;AAGpD,MAAM,CAAC,OAAO,OAAO,IAAK,SAAQ,qBAAqB;IACnD,IAAI,WAAqB;IAChB,IAAI,SAAU;IACR,KAAK,CAAC,IAAI,EAAE,aAAa,EAAE,IAAI,EAAE,WAAW;CAW9D"}

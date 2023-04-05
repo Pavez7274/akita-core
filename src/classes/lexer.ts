@@ -7,26 +7,17 @@ export interface matchedFunction {
     pos: number
     len: number
 }
-
-export class akitaFunction {
-    public total: string;
-    constructor(
-        public readonly name: string,
-        public readonly id: string
-    ) {
-        this.total = id;
-    }
-    public after(input: string) {
-        return input.slice((input.match(this.id.replace(/(\(|\))/g, "\\$1"))?.index ?? 0) + this.id.length);
-    }
-    public fields(input: string) {
-        const fields = Lexer.lex_inside(this.after(input));
-        this.total += "[" + fields.inside + "]";
-        return fields;
-    }
-    public _fields(input: string) {
-        return Lexer.lex_inside(this.after(input));
-    }
+export interface functionFields {
+    overloads: akitaFunction[]
+    value: string
+}
+export interface akitaFunction {
+    fields?: functionFields[]
+    inside?: string
+    total: string
+    name: string
+    pos: number
+    id: string
 }
 
 export class Lexer {
@@ -37,24 +28,29 @@ export class Lexer {
     }
     public set_functions(functions: string[]): this {
         this.functions = functions.sort((a, b) => b.length - a.length);
-        this.regexp = new RegExp(`(${this.functions.map(a => a.replace("$", "\\$")).join("|")})`, this.insensitive ? "gi" : "g");
+        this.regexp = new RegExp(`(${this.functions.join("|")})`, this.insensitive ? "gi" : "g");
         return this;
     }
     private find_function(x: string) {
         return this.functions.find(f => toLower(f) === toLower(x));
     }
-    private match(input: string): matchedFunction | null {
+    private match_functions(): matchedFunction[] {
         if (isNil(this.regexp)) throw new Error("Expected regex value!");
-        const match = input.match(this.regexp);
-        return isNil(match) ? null : {
-            name: this.insensitive ? this.find_function(match[0]) as string : match[0],
-            pos: match.index as number,
-            len: match[0].length,
-            match: match[0]
-        };
+        const maches = this.input.matchAll(this.regexp),
+            result: matchedFunction[] = [];
+        for (let i = maches.next(); !isNil(i); i = maches.next()) {
+            if (i.done) break;
+            result.push({
+                name: this.insensitive ? this.find_function(i.value[0]) as string : i.value[0],
+                pos: i.value.index as number,
+                len: i.value[0].length,
+                match: i.value[0]
+            });
+        }
+        return result;
     }
-    public static lex_inside(after: string) {
-        const fields: string[] = [""];
+    public static lex_inside(after: string, functions_array: Array<akitaFunction>) {
+        const fields: functionFields[] = [{ value: "", overloads: [] }];
         let escape = false,
             closed = false,
             inside = "",
@@ -64,43 +60,61 @@ export class Lexer {
                 inside += char;
                 escape = false;
             } else if (char === "\\") escape = true;
-            else if (char === ";") {
-                fields.push("");
+            else if (char === "|") {
+                fields.push({ value: "", overloads: [] });
                 inside += char;
-            } else if (char === "]" && depth <= 0) { closed = true; break; }
-            else if (char === "[") {
-                fields[fields.length - 1] += char;
+            } else if (char === ")" && depth <= 0) { closed = true; break; }
+            else if (char === "(") {
+                fields[fields.length - 1].value += char;
                 inside += char;
                 depth++;
-            } else if (char === "]" && depth > 0) {
-                fields[fields.length - 1] += char;
+            } else if (char === ")" && depth > 0) {
+                fields[fields.length - 1].value += char;
                 inside += char;
                 depth--;
             } else {
-                fields[fields.length - 1] += char;
+                fields[fields.length - 1].value += char;
                 inside += char;
             }
         }
-        if (!closed) throw new SyntaxError("Missing ]");
-        return { fields, inside };
-    }
-    lex(debug = false) {
-        const functions_array: akitaFunction[] = [];
-        for (let index = 0, match = this.match(this.input); !isNil(match); match = this.match(this.input), index++) {
-            if (isNil(match)) continue;
-            const sysfu = new akitaFunction(match.name, `SYSTEM_FUNCTION(${index})`);
-            functions_array.unshift(sysfu);
-            this.input = this.input.replace(match.match, sysfu.id);
+        for (let index = 0; index < fields.length; index++) {
+            const possible_functions = fields[index].value.match(/SYSTEM_FUNCTION\(\d+\)/g);
+            if (possible_functions?.length) {
+                for (const possible_function of possible_functions) {
+                    const pos = functions_array.findIndex(n => n.id === possible_function);
+                    if (pos !== -1) {
+                        fields[index].overloads.push(functions_array[pos]);
+                        functions_array.splice(pos, 1);
+                    }
+                }
+            }
         }
-        debug && console.log(this.input, "\n", inspect(functions_array, { depth: null, colors: true }));
-        return functions_array;
+        if (!closed) throw new SyntaxError("Missing )");
+        return { fields, inside, functions_array };
+    }
+    main(debug = false) {
+        const maches = this.match_functions(), block: Array<akitaFunction> = [];
+        let input = this.input;
+        for (let index = maches.length - 1; index >= 0; index--) {
+            const match = maches[index],
+                akitaFunction: akitaFunction = {
+                    id: `SYSTEM_FUNCTION(${index})`,
+                    total: match.name,
+                    name: match.name,
+                    pos: match.pos
+                },
+                after = input.slice(match.pos + match.len);
+            if (after.charAt(0) === "(") {
+                const { fields, inside } = Lexer.lex_inside(after, block);
+                akitaFunction.total += `(${inside})`;
+                akitaFunction.inside = inside;
+                akitaFunction.fields = fields;
+            }
+            block.unshift(akitaFunction);
+            input = input.slice(0, match.pos) + akitaFunction.id + input.slice(match.pos + akitaFunction.total.length);
+        }
+        debug && console.log(inspect(block, { depth: null, colors: true }));
+        return { functions_array: block, input };
     }
 }
-
-// TEST
-// const code = "$uwu['aaaaaaaaaaaaa a'];";
-// const lexer = new Lexer(code);
-// lexer.set_functions(["$uwu", "$ovo"]);
-// console.log(
-//     lexer.lex(true)[0].after(lexer.input)
-// );
+// new Lexer("$uwu[$ovo[$ovo];123;$ovo]").set_functions(["$uwu", "$ovo"]).main(true);

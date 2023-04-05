@@ -5,4 +5,4 @@ export default class sleep extends AbstractAkitaFunction {
     name: string;
     solve(self: akitaFunction, data: object_data): Promise<object_data>;
 }
-//# sourceMappingURL=sleep.d.ts.map
+//# sourceMappingURL=isJson.d.ts.map
