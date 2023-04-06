@@ -5,7 +5,7 @@ import Util from "./util";
 import { functionFields } from "./lexer";
 import { isNil } from "lodash";
 
-export type object_data = object & {
+export type object_data = Record<string, unknown> & {
     parents: string[]
     input: string
     epd: unknown
@@ -15,10 +15,9 @@ export class Interpreter {
     static functions: Record<string, AbstractAkitaFunction> = {};
     public readonly lexer: Lexer;
     constructor(
-        readonly input: string,
         readonly client: AkitaClient
     ) {
-        this.lexer = new Lexer(input, client?.__options__?.insensitive ?? false);
+        this.lexer = new Lexer(client?.__options__?.insensitive ?? false);
         this.lexer.set_functions(Object.keys(Interpreter.functions));
     }
     static async solve_fields(data: object_data, af: akitaFunction, i?: number[], s = 0, e?: number) {

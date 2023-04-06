@@ -23,8 +23,10 @@ export interface akitaFunction {
 export class Lexer {
     private regexp: RegExp | null = null;
     private functions: string[] = [];
-    constructor(public input: string, private readonly insensitive = true) {
-        if ("string" !== typeof input) throw new Error("Input must be a string!");
+    public input = "";
+    constructor(private readonly insensitive = true) { }
+    public set_input(n: string) {
+        this.input = n;
     }
     public set_functions(functions: string[]): this {
         this.functions = functions.sort((a, b) => b.length - a.length);

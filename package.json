@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "discord.js": "^14.8.0",
     "hjson": "^3.2.2",
     "js-beautify": "^1.14.7",
     "lodash": "^4.17.21",
