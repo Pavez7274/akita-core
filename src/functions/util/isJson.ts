@@ -1,22 +1,21 @@
 import { Interpreter, object_data } from "../../classes/interpreter";
 import { AbstractAkitaFunction } from "../../classes/function";
+import { isEqual, isNil, isObjectLike, keys } from "lodash";
 import { akitaFunction } from "../../classes/lexer";
 import Util from "../../classes/util";
-import { isNil } from "lodash";
 
-export default class sleep extends AbstractAkitaFunction {
-    override name = "@isJson";
-    override async solve(self: akitaFunction, data: object_data): Promise<object_data> {
-        if (isNil(self.inside)) throw new Error("@isJson require brackets");
-        await Interpreter.solve_fields(data, self);
-        const x = Util.parse_object(self.inside);
-        data.input = data.input.replace(self.id, x ? "true" : "false");
+export default class _isObject extends AbstractAkitaFunction {
+    override name = "@isObject";
+    override async solve(this: Interpreter, self: akitaFunction, data: object_data): Promise<object_data> {
+        if (isNil(self.inside) || isNil(self.fields)) throw new Error("@isObject require brackets");
+        await this.solve_fields(data, self);
+        if (self.prototype === ".like") {
+            const x = Util.parse_object(self.fields[0].value) as object,
+                t = Util.parse_object(self.fields[1].value) as object;
+            if (isObjectLike(x) && isObjectLike(t))
+                this.resolve(data, self, isEqual(keys(x), keys(t)));
+            else this.resolve(data, self, false);
+        } else this.resolve(data, self, isObjectLike(Util.parse_object(self.inside)));
         return data;
-        // const { inside } = self.fields(data.input);
-        // if (isNil(inside)) throw new Error("$sleep require brackets");
-        // data.imports.includes("var Util = require(\"akita.ts/lib/classes/util\");")
-        //     || (data.imports += "var Util = require(\"akita.ts/lib/classes/util\";\n");
-        // data.returns[self.id] = `Util.parse_object(${inside.replace(/SYSTEM_RESULT\("(.*?)"\)/g, (a, m) => data.returns[m] || a)}, false) ? true : false`;
-        // data.input = data.input.replace(self.total, `SYSTEM_RESULT("${self.id}")`);
     }
 }

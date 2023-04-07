@@ -1,7 +1,7 @@
-import { Dirent, readdirSync } from "fs";
 import { parse, DeserializeOptions } from "hjson";
+import { object_data } from "./interpreter";
+import { Dirent, readdirSync } from "fs";
 import { split } from "lodash";
-import { transpilerData } from "./transpiler";
 
 export default class Util {
     static readonly operators = [/*"===", "!==",*/ "==", "!=", ">=", "<=", ">", "<"];
@@ -66,10 +66,9 @@ export default class Util {
         }
         return result;
     }
-    static interpolate_strig(field: string, data: transpilerData) {
+    static interpolate_strig(field: string, data: object_data) {
         return field.includes("SYSTEM_RESULT")
-            ? "`" + field.replace(/SYSTEM_RESULT\("(.*?)"\)/g, (_, m) => `\${${data.returns[m]}}`)
-                .replace(/"/g, "\\\"") + "`" :
-            `"${field.replace(/"/g, "\\\"")}"`;
+            ? field.replace(/SYSTEM_RESULT\(\d+\)/g, m => `${data.results[m]}`)
+            : field;
     }
 }

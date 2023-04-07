@@ -5,11 +5,11 @@ import { isNil } from "lodash";
 
 export default class log extends AbstractAkitaFunction {
     override name = "@log";
-    override async solve(self: akitaFunction, data: object_data) {
-        await Interpreter.solve_fields(data, self);
-        if (isNil(self.inside)) throw new Error("@log require brackets");
-        console.log(self.inside);
-        data.input.replace(self.id, "");
+    override async solve(this: Interpreter, self: akitaFunction, data: object_data) {
+        await this.solve_fields(data, self);
+        if (isNil(self.fields)) throw new Error("@log require brackets");
+        console.log(...self.fields.map(({ value }) => value));
+        this.resolve(data, self, "");
         return data;
     }
 }

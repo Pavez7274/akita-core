@@ -3,12 +3,18 @@ import { AkitaClient } from "./client";
 import { Lexer, akitaFunction } from "./lexer";
 import Util from "./util";
 import { functionFields } from "./lexer";
-import { isNil } from "lodash";
+import { isNil, merge } from "lodash";
+import { inspect } from "util";
 
-export type object_data = Record<string, unknown> & {
+export type obj = Record<string, unknown>;
+export type object_data = obj & {
+    extra: Record<string, unknown> & {
+        variables: obj
+    }
     parents: string[]
     input: string
     epd: unknown
+    results: obj
 };
 
 export class Interpreter {
@@ -20,7 +26,7 @@ export class Interpreter {
         this.lexer = new Lexer(client?.__options__?.insensitive ?? false);
         this.lexer.set_functions(Object.keys(Interpreter.functions));
     }
-    static async solve_fields(data: object_data, af: akitaFunction, i?: number[], s = 0, e?: number) {
+    async solve_fields(data: object_data, af: akitaFunction, i?: number[], s = 0, e?: number) {
         for (let index = s; index < (<functionFields[]>af.fields).length; index++) {
             if (e === index) break;
             if (i && i.includes(index)) continue;
@@ -28,23 +34,28 @@ export class Interpreter {
         }
         return af;
     }
-    static async solve_field(data: object_data, af: akitaFunction, index: number) {
-        if (isNil((<functionFields[]>af.fields)[index])) return af;
+    async solve_field(data: object_data, af: akitaFunction, index: number) {
+        if (isNil(af.fields) || isNil(af.fields[index])) return af;
         const bass = data;
-        for (const overload of (<functionFields[]>af.fields)[index].overloads) {
-            data.input = (<functionFields[]>af.fields)[index].value;
+        for (const overload of af.fields[index].overloads) {
+            data.input = af.fields[index].value;
             const finded = Interpreter.functions[overload.name],
-                reject = await finded.solve(overload, data);
+                reject = await finded.solve.apply(this, [overload, data]);
             if (reject.input) {
-                (<functionFields[]>af.fields)[index].value = reject.input;
-                af.inside = (<functionFields[]>af.fields).map(f => f.value).join("|");
+                const results = reject.input.match(/SYSTEM_RESULT\(\d+\)/g);
+                if (results) {
+                    if (reject.input === results[0])
+                        af.fields[index].value = data.results[results[0]] as string;
+                    else af.fields[index].value = Util.interpolate_strig(reject.input, data);
+                } else af.fields[index].value = reject.input;
+                af.inside = af.fields.map(f => f.value).join("|");
                 af.total = `${af.name}[${af.inside}]`;
             }
         }
         data.input = bass.input;
         return af;
     }
-    public static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>) {
+    static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>) {
         for (const abs_based_function of abs_based_functions) {
             const t = new abs_based_function();
             Interpreter.functions[t.name] = t;
@@ -56,26 +67,48 @@ export class Interpreter {
             Interpreter.functions[t.name] = t;
         }
     }
-    public async solve(data: object_data) {
+    public resolve(data: object_data, af: akitaFunction, rpr: unknown) {
+        const res_id = `SYSTEM_RESULT(${af._id})`;
+        data.input = data.input.replace(af.id, res_id);
+        data.results[res_id] = rpr;
+    }
+    public async solve(data: object_data, debug = false) {
+        debug && console.log("[ DEBUG ]   Gived Input:\n\x1b[31m%s\x1b[0m", this.lexer.input);
         const { input, functions_array } = this.lexer.main();
-        data.parents ??= [];
-        data.input = input;
+        debug && console.log("[ DEBUG ]   Parsed:\n\x1b[31m%s\x1b[0m", input);
+        merge(data, {
+            results: {},
+            parents: [],
+            extra: {
+                variables: {}
+            },
+            epd: null,
+            input
+        });
+        debug && console.log("[ DEBUG ]   Executions\x1b[33m");
         for (const af of functions_array) {
             const finded = Interpreter.functions[af.name];
+            if (af.prototype) {
+                if (finded.prototypes.includes(af.prototype))
+                    throw new Error(`${af.name} doesn't have the prototype "${af.prototype}"`);
+                else if (finded.prototypes.length === 0)
+                    throw new Error(`${af.name} doesn't have prototypes`);
+            }
             if (finded.type === "parent") data.parents.push(finded.name);
             try {
-                data = await finded.solve(af, data);
+                data = await finded.solve.apply(this, [af, data]);
             } catch (error) {
                 if (data.parents.length === 0 || !data.parents.includes("@try"))
                     throw error;
                 else if (data.parents.includes("@try")) {
                     data.epd = "catch";
-                    data = await finded.solve(af, data);
+                    data = await finded.solve.apply(this, [af, data]);
                 }
             }
             finded.type === "parent" && data.parents.pop();
             data.epd = null;
         }
+        debug && console.log("\x1b[0m[ DEBUG ]   Final: %s", inspect(data, { depth: null, colors: true }));
         return data;
     }
 }

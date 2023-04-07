@@ -15,10 +15,10 @@
   },
   "name": "akita",
   "version": "2.0.0-unstable",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {},
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": ""
 }

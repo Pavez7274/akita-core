@@ -1,4 +1,5 @@
 export interface matchedFunction {
+    prototype?: string;
     match: string;
     name: string;
     pos: number;
@@ -9,19 +10,22 @@ export interface functionFields {
     value: string;
 }
 export interface akitaFunction {
+    prototype?: string;
     fields?: functionFields[];
     inside?: string;
     total: string;
     name: string;
     pos: number;
+    _id: number;
     id: string;
 }
 export declare class Lexer {
-    input: string;
     private readonly insensitive;
     private regexp;
     private functions;
-    constructor(input: string, insensitive?: boolean);
+    input: string;
+    constructor(insensitive?: boolean);
+    set_input(n: string): void;
     set_functions(functions: string[]): this;
     private find_function;
     private match_functions;

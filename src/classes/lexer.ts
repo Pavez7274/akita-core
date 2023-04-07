@@ -2,6 +2,7 @@ import { isNil, toLower } from "lodash";
 import { inspect } from "util";
 
 export interface matchedFunction {
+    prototype?: string
     match: string
     name: string
     pos: number
@@ -12,11 +13,13 @@ export interface functionFields {
     value: string
 }
 export interface akitaFunction {
+    prototype?: string
     fields?: functionFields[]
     inside?: string
     total: string
     name: string
     pos: number
+    _id: number
     id: string
 }
 
@@ -30,7 +33,7 @@ export class Lexer {
     }
     public set_functions(functions: string[]): this {
         this.functions = functions.sort((a, b) => b.length - a.length);
-        this.regexp = new RegExp(`(${this.functions.join("|")})`, this.insensitive ? "gi" : "g");
+        this.regexp = new RegExp(`(${this.functions.join("|")})(\\.[A-z_]+)?`, this.insensitive ? "gi" : "g");
         return this;
     }
     private find_function(x: string) {
@@ -43,10 +46,11 @@ export class Lexer {
         for (let i = maches.next(); !isNil(i); i = maches.next()) {
             if (i.done) break;
             result.push({
-                name: this.insensitive ? this.find_function(i.value[0]) as string : i.value[0],
+                name: this.insensitive ? this.find_function(i.value[1]) as string : i.value[1],
                 pos: i.value.index as number,
                 len: i.value[0].length,
-                match: i.value[0]
+                match: i.value[0],
+                prototype: i.value[2]
             });
         }
         return result;
@@ -101,9 +105,11 @@ export class Lexer {
             const match = maches[index],
                 akitaFunction: akitaFunction = {
                     id: `SYSTEM_FUNCTION(${index})`,
-                    total: match.name,
+                    prototype: match.prototype,
+                    total: match.match,
                     name: match.name,
-                    pos: match.pos
+                    pos: match.pos,
+                    _id: index
                 },
                 after = input.slice(match.pos + match.len);
             if (after.charAt(0) === "(") {
@@ -119,4 +125,7 @@ export class Lexer {
         return { functions_array: block, input };
     }
 }
-// new Lexer("$uwu[$ovo[$ovo];123;$ovo]").set_functions(["$uwu", "$ovo"]).main(true);
+
+// const lex = new Lexer();
+// lex.set_input("uwu(ovo(asas|ovo.static))");
+// lex.set_functions(["uwu", "ovo"]).main(true);
