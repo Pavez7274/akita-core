@@ -19,17 +19,23 @@ export interface akitaFunction {
     _id: number;
     id: string;
 }
+export declare const default_lexer_options: {
+    insensitive?: boolean;
+    argument?: string;
+    opener?: string;
+    closer?: string;
+};
 export declare class Lexer {
-    private readonly insensitive;
+    private options;
     private regexp;
     private functions;
     input: string;
-    constructor(insensitive?: boolean);
+    constructor(options?: typeof default_lexer_options);
     set_input(n: string): void;
     set_functions(functions: string[]): this;
     private find_function;
     private match_functions;
-    static lex_inside(after: string, functions_array: Array<akitaFunction>): {
+    lex_inside(after: string, functions_array: Array<akitaFunction>): {
         fields: functionFields[];
         inside: string;
         functions_array: akitaFunction[];

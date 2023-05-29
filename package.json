@@ -1,9 +1,8 @@
 {
   "dependencies": {
     "hjson": "^3.2.2",
-    "js-beautify": "^1.14.7",
     "lodash": "^4.17.21",
-    "oceanic.js": "^1.6.0"
+    "tslib": "^2.5.2"
   },
   "devDependencies": {
     "@types/hjson": "^2.4.3",
@@ -13,12 +12,19 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ts-node": "^10.9.1"
   },
-  "name": "akita",
-  "version": "2.0.0-unstable",
+  "name": "@akita.ts/core",
+  "version": "0.0.1",
   "main": "lib/index.js",
   "scripts": {},
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "interpreter",
+    "BDFD"
+  ],
+  "author": "Kodeko",
   "license": "MIT",
-  "description": ""
+  "description": "A powerfull string interpreter",
+  "types": "./lib/index.d.ts",
+  "directories": {
+    "lib": "lib"
+  }
 }

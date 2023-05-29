@@ -1,5 +1,5 @@
-import { type akitaFunction } from "./lexer";
 import { Interpreter, object_data } from "./interpreter";
+import { type akitaFunction } from "./lexer";
 export declare abstract class AbstractAkitaFunction {
     type: "unknown" | "parent";
     prototypes: Array<string>;
