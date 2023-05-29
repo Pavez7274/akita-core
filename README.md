@@ -1,21 +1,21 @@
-# **@akita.ts/core**
+# **@kodeko/akita-core**
 
-> `@akita.ts/core` is a free-to-use string-based interpreter that allows people to develop packages with a simple syntax. The syntax is based on a **keyword** that represents a function, characters to indicate function **opening** and **closing**, and a character to **separate arguments**. A good analogy to use would be the way function calls are made, for example: `myFunction(1, 2, 3)`, where "myFunction" is the keyword, "(" is the opening symbol, ")" is the closing symbol, and "," is the argument separator.
+> `@kodeko/akita-core` is a free-to-use string-based interpreter that allows people to develop packages with a simple syntax. The syntax is based on a **keyword** that represents a function, characters to indicate function **opening** and **closing**, and a character to **separate arguments**. A good analogy to use would be the way function calls are made, for example: `myFunction(1, 2, 3)`, where "myFunction" is the keyword, "(" is the opening symbol, ")" is the closing symbol, and "," is the argument separator.
 
 ## Installation
 
-You can install @akita.ts/core using the following npm command:
+You can install @kodeko/akita-core using the following npm command:
 
 ```shell
-npm install @akita.ts/core
+npm install @kodeko/akita-core
 ```
 
 ## Usage
 
-Once installed, you can use @akita.ts/core in your project as follows:
+Once installed, you can use @kodeko/akita-core in your project as follows:
 
 ```ts
-import { Interpreter, akita_functions_mod } from "@akita.ts/core";
+import { Interpreter, akita_functions_mod } from "@kodeko/akita-core";
 
 void (async function main() {
 	// Load the defult functions and adds as prefix $
@@ -43,7 +43,7 @@ void (async function main() {
 Hello world!
 ```
 
-In the above example, we import the `@akita.ts/core` package and then execute a script represented by the string "$log\[$get\[great]]". The execute method of `@akita.ts/core` will parse and execute the script, returning the result. In this case, the result will be logged to the console.
+In the above example, we import the `@kodeko/akita-core` package and then execute a script represented by the string "$log\[$get\[great]]". The execute method of `@kodeko/akita-core` will parse and execute the script, returning the result. In this case, the result will be logged to the console.
 
 ## Functioning
 
@@ -98,7 +98,7 @@ First, it tries to execute $log, but since it contains within its arguments anot
 ## Additional Considerations
 
 - Ensure you provide valid scripts and follow the syntax described above.
-- Please note that @akita.ts/core is a string-based interpreter and there may be limitations or unhandled cases. Make sure to review the documentation and thoroughly test your code.
+- Please note that @kodeko/akita-core is a string-based interpreter and there may be limitations or unhandled cases. Make sure to review the documentation and thoroughly test your code.
 - This package is under active development, and it is recommended to stay updated with new releases and versions.
 
-> Enjoy using @akita.ts/core in your project! If you have any further questions or need more information, feel free to ask on my [DM](https://discord.com/users/788869971073040454) or our [Server](https://discord.gg/MYZbyRYaxF).
+> Enjoy using @kodeko/akita-core in your project! If you have any further questions or need more information, feel free to ask on my [DM](https://discord.com/users/788869971073040454) or our [Server](https://discord.gg/MYZbyRYaxF).
