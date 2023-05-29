@@ -12,7 +12,7 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ts-node": "^10.9.1"
   },
-  "name": "@akita.ts/core",
+  "name": "@kodeko/akita-core",
   "version": "0.0.1",
   "main": "lib/index.js",
   "scripts": {},
@@ -26,5 +26,13 @@
   "types": "./lib/index.d.ts",
   "directories": {
     "lib": "lib"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pavez7274/akita-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Pavez7274/akita-core/issues"
+  },
+  "homepage": "https://github.com/Pavez7274/akita-core#readme"
 }
