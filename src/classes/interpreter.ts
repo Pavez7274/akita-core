@@ -1,9 +1,10 @@
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { Lexer, default_lexer_options, akitaFunction } from "./lexer";
+import Util, { AkitaError } from "./util";
 import { functionFields } from "./lexer";
 import { isNil, merge } from "lodash";
 import { inspect } from "util";
-import Util from "./util";
+import { akita_functions_mod } from "..";
 
 export type record = Record<string, unknown>;
 export type object_data = record & {
@@ -69,6 +70,11 @@ export class Interpreter {
 			Interpreter.functions[t.name] = t;
 		}
 	}
+	public static async load_core_functions(
+		cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction
+	) {
+		await this.load_functions(akita_functions_mod, cb);
+	}
 	public static async load_functions(
 		mod: string,
 		cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction
@@ -76,11 +82,20 @@ export class Interpreter {
 		for (const file of Util.get_files(mod).filter((el) =>
 			el.name.endsWith(".js")
 		)) {
-			let t = new (
-				(await import(file.name)) as { default: typeof VoidAkitaFunction }
-			).default();
-			if (cb) t = await cb(t);
-			Interpreter.functions[t.name] = t;
+			try {
+				console.log("\u001b[94mReading %s...\u001b[0m", file.name);
+				let t = new (
+					(await import(file.name)) as { default: typeof VoidAkitaFunction }
+				).default();
+				if (cb) t = await cb(t);
+				this.functions[t.name] = t;
+			} catch (error) {
+				console.log(
+					"\u001b[31mThere was an error loading %s\n%s\u001b[0m",
+					file.name,
+					(<Error>error).message
+				);
+			}
 		}
 	}
 	public resolve<T = unknown>(data: object_data, af: akitaFunction, rpr: T) {
@@ -88,7 +103,7 @@ export class Interpreter {
 		data.input = data.input.replace(af.id, res_id);
 		data.results[res_id] = rpr;
 	}
-	public async solve(data: object_data, debug = false) {
+	public async solve(data: Partial<object_data>, debug = false) {
 		debug &&
 			console.log("[ DEBUG ]   Gived Input\n\x1b[31m%s\x1b[0m", this.lexer.input);
 		const { input, functions_array } = this.lexer.main(debug);
@@ -107,23 +122,25 @@ export class Interpreter {
 			const finded = Interpreter.functions[af.name];
 			if (af.prototype) {
 				if (!finded.prototypes.includes(af.prototype))
-					throw new Error(`${af.name} doesn't have the prototype "${af.prototype}"`);
+					throw new AkitaError(
+						`${af.name} doesn't have the prototype "${af.prototype}"`
+					);
 				else if (finded.prototypes.length === 0)
-					throw new Error(`${af.name} doesn't have prototypes`);
+					throw new AkitaError(`${af.name} doesn't have prototypes`);
 			}
-			if (finded.type === "parent") data.parents.push(finded.name);
+			if (finded.type === "parent") data.parents?.push(finded.name);
 			try {
-				data = await finded.solve.apply(this, [af, data]);
+				data = await finded.solve.apply(this, [af, <object_data>data]);
 			} catch (error) {
-				if (data.parents.length === 0 || !data.parents.includes("$try"))
+				if (data.parents?.length === 0 || !data.parents?.includes("$try"))
 					throw error;
 				else if (data.parents.includes("$try")) {
 					data.epd = "catch";
-					data.extra.error = error;
-					data = await finded.solve.apply(this, [af, data]);
+					(<object_data["extra"]>data.extra).error = error;
+					data = await finded.solve.apply(this, [af, <object_data>data]);
 				}
 			}
-			finded.type === "parent" && data.parents.pop();
+			finded.type === "parent" && data.parents?.pop();
 			data.epd = null;
 		}
 		debug &&

@@ -1,33 +1,35 @@
 # **@kodeko/akita-core**
 
-> `@kodeko/akita-core` is a free-to-use string-based interpreter that allows people to develop packages with a simple syntax. The syntax is based on a **keyword** that represents a function, characters to indicate function **opening** and **closing**, and a character to **separate arguments**. A good analogy to use would be the way function calls are made, for example: `myFunction(1, 2, 3)`, where "myFunction" is the keyword, "(" is the opening symbol, ")" is the closing symbol, and "," is the argument separator.
+<small>`@kodeko/akita-core` is a free-to-use string-based interpreter that allows people to develop packages with a simple syntax. The syntax is based on a **keyword** that represents a function, characters to indicate function **opening** and **closing**, and a character to **separate arguments**. A good analogy to use would be the way function calls are made, for example: `myFunction(1, 2, 3)`, where "myFunction" is the keyword, "(" is the opening symbol, ")" is the closing symbol, and "," is the argument separator.
+</small>
 
 ## Installation
 
-You can install @kodeko/akita-core using the following npm command:
+You can install `@kodeko/akita-core` using the following npm command:
 
 ```shell
 npm install @kodeko/akita-core
 ```
 
-## Usage
+## Example
 
-Once installed, you can use @kodeko/akita-core in your project as follows:
+Once installed, you can use the akita interpreter in your project as follows:
 
 ```ts
-import { Interpreter, akita_functions_mod } from "@kodeko/akita-core";
+import {
+	akita_functions_mod,
+	Interpreter,
+	withPrefix,
+} from "@kodeko/akita-core";
 
 void (async function main() {
 	// Load the defult functions and adds as prefix $
-	await Interpreter.load_functions(akita_functions_mod, (t) => {
-		t.name = "$" + t.name;
-		return t;
-	});
-    // Creates a new Interpreter
+	await Interpreter.load_functions(akita_functions_mod, withPrefix("$"));
+	// Creates a new Interpreter
 	const itr = new Interpreter();
-    // Sets the input to execute
+	// Sets the input to execute
 	itr.lexer.set_input("$log[$get[great]]");
-    // Executes the input
+	// Executes the input
 	await itr.solve({
 		extra: {
 			variables: {
@@ -43,11 +45,11 @@ void (async function main() {
 Hello world!
 ```
 
-In the above example, we import the `@kodeko/akita-core` package and then execute a script represented by the string "$log\[$get\[great]]". The execute method of `@kodeko/akita-core` will parse and execute the script, returning the result. In this case, the result will be logged to the console.
+In the above example, we import the interpreter and helpers and then execute a script represented by the string "$log\[$get\[great]]". The execute method of the akita interpreter will parse and execute the script, returning the result. In this case, the result will be logged to the console.
 
-## Functioning
+## How Works?
 
-The Akita interpreter works through a **lexer based on regular expressions**, which detects keywords and their arguments. It then stores this information in objects and replaces their values with SYSTEM_FUNCTION(<UNIQUE_ID>). For example:
+The akita interpreter works through **a lexer based on regular expressions**, which detects **keywords** and their arguments. It then stores this information in objects and replaces their values with SYSTEM_FUNCTION(<small>\<unique id></small>). For example:
 
 ```php
 // Input
@@ -87,18 +89,30 @@ First, it tries to execute $log, but since it contains within its arguments anot
 ```ts
 // Final interpreter object data
 {
-  extra: { variables: { great: 'Hello world!' } },
   results: { 'SYSTEM_RESULT(1)': 'Hello world!', 'SYSTEM_RESULT(0)': '' },
+  extra: { variables: { great: 'Hello world!' } },
+  input: 'SYSTEM_RESULT(1)',
   parents: [],
   epd: null,
-  input: 'SYSTEM_RESULT(1)'
 }
 ```
 
 ## Additional Considerations
 
-- Ensure you provide valid scripts and follow the syntax described above.
-- Please note that @kodeko/akita-core is a string-based interpreter and there may be limitations or unhandled cases. Make sure to review the documentation and thoroughly test your code.
-- This package is under active development, and it is recommended to stay updated with new releases and versions.
+<small>
+  <ul>
+    <li>
+      Ensure you provide valid scripts and follow the syntax described above.
+    </li>
+    <li>
+      Please note that <code>@kodeko/akita-core</code> is a string-based interpreter and there may be limitations or unhandled cases. Make sure to review the documentation and thoroughly test your code.
+    </li>
+    <li>
+      This package is under active development, and it is recommended to stay updated with new releases and versions.
+    </li>
+  </ul>
+</small>
 
-> Enjoy using @kodeko/akita-core in your project! If you have any further questions or need more information, feel free to ask on my [DM](https://discord.com/users/788869971073040454) or our [Server](https://discord.gg/MYZbyRYaxF).
+- - -
+
+Enjoy using the package in your project! If you have any further questions or need more information, feel free to ask on my [Discord DM](https://discord.com/users/788869971073040454) or our [Discord Server](https://discord.gg/MYZbyRYaxF).

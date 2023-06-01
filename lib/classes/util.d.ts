@@ -2,6 +2,9 @@
 import { DeserializeOptions } from "hjson";
 import { object_data } from "./interpreter";
 import { Dirent } from "fs";
+export declare class AkitaError extends Error {
+    constructor(msg: string);
+}
 export default class Util {
     static readonly operators: string[];
     static readonly falsys: string[];

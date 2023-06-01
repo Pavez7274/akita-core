@@ -1,17 +1,21 @@
 import { Interpreter, object_data } from "../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../classes/function";
 import { akitaFunction } from "../../classes/lexer";
 import { setTimeout } from "timers/promises";
-import { isNil, noop } from "lodash";
+import { noop } from "lodash";
+import {
+	AbstractAkitaFunction,
+	RequiredField,
+	requiredFields,
+} from "../../classes/function";
 
 export default class extends AbstractAkitaFunction {
 	name = "sleep";
+	@requiredFields(1)
 	async solve(
 		this: Interpreter,
-		self: akitaFunction,
+		self: RequiredField<akitaFunction, "fields">,
 		data: object_data
 	): Promise<object_data> {
-		if (isNil(self.fields)) throw new Error("$sleep require brackets");
 		await this.solve_fields(data, self);
 		await setTimeout(Number(self.fields[0].value), noop);
 		this.resolve(data, self, true);

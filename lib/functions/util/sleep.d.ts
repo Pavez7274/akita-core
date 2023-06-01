@@ -1,8 +1,8 @@
 import { Interpreter, object_data } from "../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../classes/function";
 import { akitaFunction } from "../../classes/lexer";
+import { AbstractAkitaFunction, RequiredField } from "../../classes/function";
 export default class extends AbstractAkitaFunction {
     name: string;
-    solve(this: Interpreter, self: akitaFunction, data: object_data): Promise<object_data>;
+    solve(this: Interpreter, self: RequiredField<akitaFunction, "fields">, data: object_data): Promise<object_data>;
 }
 //# sourceMappingURL=sleep.d.ts.map

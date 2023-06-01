@@ -3,6 +3,11 @@ import { object_data } from "./interpreter";
 import { Dirent, readdirSync } from "fs";
 import { split } from "lodash";
 
+export class AkitaError extends Error {
+	constructor(msg: string) {
+		super("\u001b[41m".concat(msg, "\u001b[0m"));
+	}
+}
 export default class Util {
 	static readonly operators = [
 		/*"===", "!==",*/ "==",
@@ -76,8 +81,7 @@ export default class Util {
 			else if (sentence.includes("!=")) return this.solve_unequal(sentence);
 			else if (sentence.includes(">="))
 				return this.solve_greater_or_equal(sentence);
-			else if (sentence.includes("<="))
-				return this.solve_less_or_equal(sentence);
+			else if (sentence.includes("<=")) return this.solve_less_or_equal(sentence);
 			else if (sentence.includes(">")) return this.solve_greater(sentence);
 			else if (sentence.includes("<")) return this.solve_less(sentence);
 			else return this.booleanify(sentence);
@@ -94,9 +98,7 @@ export default class Util {
 		const files = readdirSync(mod, { withFileTypes: true });
 		for (const file of files) {
 			file.name = `${mod}/${file.name}`;
-			file.isDirectory()
-				? this.get_files(file.name, result)
-				: result.push(file);
+			file.isDirectory() ? this.get_files(file.name, result) : result.push(file);
 		}
 		return result;
 	}

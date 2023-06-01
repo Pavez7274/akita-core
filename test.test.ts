@@ -1,14 +1,14 @@
+import { withPrefix } from "./src";
+
 /* eslint-disable no-undef */
-const { Interpreter } = require("./lib/index");
-const { cwd } = require("process");
+import { Interpreter } from "./src/index";
+import { cwd } from "process";
 
 void (async function main() {
-	await Interpreter.load_functions(cwd() + "/lib/functions/", (t) => {
-		t.name = "$" + t.name;
-		return t;
-	});
+	await Interpreter.load_functions(cwd() + "/lib/functions/", withPrefix("$"));
 	const itr = new Interpreter();
-	itr.lexer.set_input("$log[$get[great]]");
+	itr.lexer.set_input("$log");
+	await itr.solve({});
 	await itr.solve(
 		{
 			extra: {

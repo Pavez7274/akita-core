@@ -1,38 +1,43 @@
 {
-  "dependencies": {
-    "hjson": "^3.2.2",
-    "lodash": "^4.17.21",
-    "tslib": "^2.5.2"
-  },
-  "devDependencies": {
-    "@types/hjson": "^2.4.3",
-    "@types/lodash": "^4.14.191",
-    "@types/node": "^18.15.11",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "ts-node": "^10.9.1"
-  },
-  "name": "@kodeko/akita-core",
-  "version": "0.0.1",
-  "main": "lib/index.js",
-  "scripts": {},
-  "keywords": [
-    "interpreter",
-    "BDFD"
-  ],
-  "author": "Kodeko",
-  "license": "MIT",
-  "description": "A powerfull string interpreter",
-  "types": "./lib/index.d.ts",
-  "directories": {
-    "lib": "lib"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Pavez7274/akita-core.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Pavez7274/akita-core/issues"
-  },
-  "homepage": "https://github.com/Pavez7274/akita-core#readme"
+	"dependencies": {
+		"eslint-config-prettier": "^8.8.0",
+		"eslint-plugin-prettier": "^4.2.1",
+		"hjson": "^3.2.2",
+		"lodash": "^4.17.21",
+		"tslib": "^2.5.2"
+	},
+	"devDependencies": {
+		"@types/hjson": "^2.4.3",
+		"@types/lodash": "^4.14.191",
+		"@types/node": "^18.15.11",
+		"@typescript-eslint/eslint-plugin": "^5.56.0",
+		"@typescript-eslint/parser": "^5.56.0",
+		"ts-node": "^10.9.1"
+	},
+	"name": "@kodeko/akita-core",
+	"version": "0.0.3",
+	"main": "lib/index.js",
+	"scripts": {},
+	"keywords": [
+		"string interpreter",
+		"typescript",
+		"functions",
+		"akita",
+		"BDFD"
+	],
+	"author": "Kodeko",
+	"license": "UNIRO-ROCL",
+	"description": "A powerfull string interpreter",
+	"types": "./lib/index.d.ts",
+	"directories": {
+		"lib": "lib"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Pavez7274/akita-core.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Pavez7274/akita-core/issues"
+	},
+	"homepage": "https://github.com/Pavez7274/akita-core#readme"
 }

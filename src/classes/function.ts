@@ -1,6 +1,47 @@
 import { Interpreter, object_data } from "./interpreter";
 import { type akitaFunction } from "./lexer";
+import { isNil } from "lodash";
+import { AkitaError } from "./util";
 
+// types
+export type RequiredField<T, K extends keyof T> = T & Required<Pick<T, K>>;
+
+// decorators
+export function requiredFields(min = Infinity) {
+	return function (
+		target: AbstractAkitaFunction,
+		propertyKey: "solve",
+		descriptor: TypedPropertyDescriptor<AbstractAkitaFunction["solve"]>
+	) {
+		descriptor.value = async function (
+			this: Interpreter,
+			self: akitaFunction,
+			data: object_data
+		) {
+			if (isNil(self.fields) || (min !== Infinity && self.fields.length < min)) {
+				if (min !== Infinity) {
+					throw new AkitaError(
+						isNil(self.fields?.length)
+							? `${self.name} requires ${min} fields but didn't get any instead!`
+							: `${self.name} requires ${min} fields but instead received ${
+									self.fields?.length ?? 0
+							  }!`
+					);
+				} else throw new AkitaError(`${self.name} requires brackets!`);
+			}
+			return target[propertyKey].apply(this, [self, data]);
+		};
+		return descriptor as TypedPropertyDescriptor<
+			(
+				this: Interpreter,
+				self: RequiredField<akitaFunction, "fields" | "inside">,
+				data: object_data
+			) => Promise<object_data>
+		>;
+	};
+}
+
+// classes
 export abstract class AbstractAkitaFunction {
 	type: "unknown" | "parent" = "unknown";
 	prototypes: Array<string> = [];

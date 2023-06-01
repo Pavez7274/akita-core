@@ -1,19 +1,22 @@
 import { Interpreter, object_data } from "../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../classes/function";
-import { isEqual, isNil, isObjectLike, keys } from "lodash";
+import { isEqual, isObjectLike, keys } from "lodash";
 import { akitaFunction } from "../../classes/lexer";
 import Util from "../../classes/util";
+import {
+	AbstractAkitaFunction,
+	RequiredField,
+	requiredFields,
+} from "../../classes/function";
 
 export default class extends AbstractAkitaFunction {
 	name = "isObject";
 	prototypes = [".like"];
+	@requiredFields(2)
 	async solve(
 		this: Interpreter,
-		self: akitaFunction,
+		self: RequiredField<akitaFunction, "fields" | "inside">,
 		data: object_data
 	): Promise<object_data> {
-		if (isNil(self.inside) || isNil(self.fields))
-			throw new Error("$isObject require brackets");
 		await this.solve_fields(data, self);
 		if (self.prototype === ".like") {
 			const x = Util.parse_object(self.fields[0].value) as object,

@@ -1,7 +1,11 @@
-import { get, invoke, isFunction, isNil, result } from "lodash";
 import { Interpreter, object_data } from "../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../classes/function";
+import { get, invoke, isFunction, result } from "lodash";
 import { akitaFunction } from "../../classes/lexer";
+import {
+	AbstractAkitaFunction,
+	requiredFields,
+	RequiredField,
+} from "../../classes/function";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function _(object: object, key: string, ...rest: unknown[]) {
@@ -14,9 +18,12 @@ function _(object: object, key: string, ...rest: unknown[]) {
 export default class extends AbstractAkitaFunction {
 	name = "get";
 	prototypes: string[] = [".strict", ".invoke"];
-	async solve(this: Interpreter, self: akitaFunction, data: object_data) {
-		if (isNil(self.inside) || isNil(self.fields))
-			throw new Error("$get require brackets");
+	@requiredFields()
+	async solve(
+		this: Interpreter,
+		self: RequiredField<akitaFunction, "fields">,
+		data: object_data
+	) {
 		await this.solve_fields(data, self);
 		if (self.prototype === ".strict")
 			this.resolve(

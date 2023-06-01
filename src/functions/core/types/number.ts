@@ -21,6 +21,7 @@ export default class _number extends AbstractAkitaFunction {
 		".isFinite",
 		".isNaN",
 	];
+
 	async solve(this: Interpreter, self: akitaFunction, data: object_data) {
 		if (isNil(self.inside) || isNil(self.fields))
 			this.resolve(data, self, Number);

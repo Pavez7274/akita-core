@@ -1,7 +1,10 @@
 import { Interpreter, object_data } from "../../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../../classes/function";
+import {
+	AbstractAkitaFunction,
+	RequiredField,
+	requiredFields,
+} from "../../../classes/function";
 import { akitaFunction } from "../../../classes/lexer";
-import { isNil } from "lodash";
 
 const AsyncFunction = async function () {
 	null;
@@ -10,9 +13,12 @@ const AsyncFunction = async function () {
 export default class _function extends AbstractAkitaFunction {
 	name = "function";
 	prototypes = [".async"];
-	async solve(this: Interpreter, self: akitaFunction, data: object_data) {
-		if (isNil(self.inside) || isNil(self.fields))
-			throw new Error("$function require brackets");
+	@requiredFields()
+	async solve(
+		this: Interpreter,
+		self: RequiredField<akitaFunction, "fields">,
+		data: object_data
+	) {
 		await this.solve_fields(data, self);
 		this.resolve(
 			data,

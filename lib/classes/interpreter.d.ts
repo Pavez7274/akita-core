@@ -21,8 +21,9 @@ export declare class Interpreter {
     solve_fields(data: object_data, af: akitaFunction, i?: number[], s?: number, e?: number): Promise<akitaFunction>;
     solve_field(data: object_data, af: akitaFunction, index: number): Promise<akitaFunction>;
     static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>): void;
+    static load_core_functions(cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     static load_functions(mod: string, cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     resolve<T = unknown>(data: object_data, af: akitaFunction, rpr: T): void;
-    solve(data: object_data, debug?: boolean): Promise<object_data>;
+    solve(data: Partial<object_data>, debug?: boolean): Promise<Partial<object_data>>;
 }
 //# sourceMappingURL=interpreter.d.ts.map
