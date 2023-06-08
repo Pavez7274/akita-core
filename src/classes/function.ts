@@ -1,7 +1,7 @@
 import { Interpreter, object_data } from "./interpreter";
 import { type akitaFunction } from "./lexer";
-import { isNil } from "lodash";
 import { AkitaError } from "./util";
+import { isNil } from "lodash";
 
 // types
 export type RequiredField<T, K extends keyof T> = T & Required<Pick<T, K>>;
@@ -13,6 +13,7 @@ export function requiredFields(min = Infinity) {
 		propertyKey: "solve",
 		descriptor: TypedPropertyDescriptor<AbstractAkitaFunction["solve"]>
 	) {
+		const old = target[propertyKey];
 		descriptor.value = async function (
 			this: Interpreter,
 			self: akitaFunction,
@@ -29,7 +30,7 @@ export function requiredFields(min = Infinity) {
 					);
 				} else throw new AkitaError(`${self.name} requires brackets!`);
 			}
-			return target[propertyKey].apply(this, [self, data]);
+			return old.apply(this, [self, data]);
 		};
 		return descriptor as TypedPropertyDescriptor<
 			(

@@ -13,6 +13,13 @@ export declare type object_data = record & {
 export declare type InterpreterOptions = {
     lexer?: typeof default_lexer_options;
 };
+export declare type InterpreterDebugOptions = {
+    parsed_input?: boolean;
+    gived_input?: boolean;
+    lexer?: boolean;
+    executions?: boolean;
+    final?: boolean;
+};
 export declare class Interpreter {
     readonly options?: InterpreterOptions | undefined;
     static functions: Record<string, AbstractAkitaFunction>;
@@ -24,6 +31,6 @@ export declare class Interpreter {
     static load_core_functions(cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     static load_functions(mod: string, cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     resolve<T = unknown>(data: object_data, af: akitaFunction, rpr: T): void;
-    solve(data: Partial<object_data>, debug?: boolean): Promise<Partial<object_data>>;
+    solve(data: Partial<object_data>, debug?: boolean | InterpreterDebugOptions): Promise<Partial<object_data>>;
 }
 //# sourceMappingURL=interpreter.d.ts.map

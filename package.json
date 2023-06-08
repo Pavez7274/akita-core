@@ -15,9 +15,12 @@
 		"ts-node": "^10.9.1"
 	},
 	"name": "@kodeko/akita-core",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"main": "lib/index.js",
-	"scripts": {},
+	"scripts": {
+		"lint": "eslint --fix .\\src\\",
+		"pretty": "prettier -w .\\src\\"
+	},
 	"keywords": [
 		"string interpreter",
 		"typescript",

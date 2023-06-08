@@ -49,13 +49,12 @@ export class Lexer {
 	public set_functions(functions: string[]): this {
 		this.functions = functions.sort((a, b) => b.length - a.length);
 		this.regexp = new RegExp(
-			`(${this.functions.map(escapeRegExp).join("|")})(\\.[A-z_]+)?`,
+			`(${this.functions.map(escapeRegExp).join("|")})(\\.[A-z_])?`,
 			this.options.insensitive ? "gi" : "g"
 		);
-		console.log(this.regexp);
 		return this;
 	}
-	private find_function(x: string) {
+	public find_function(x: string) {
 		return this.functions.find((f) => toLower(f) === toLower(x));
 	}
 	private match_functions(): matchedFunction[] {

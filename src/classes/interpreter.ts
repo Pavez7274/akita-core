@@ -1,8 +1,8 @@
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { Lexer, default_lexer_options, akitaFunction } from "./lexer";
+import { isNil, isObject, merge } from "lodash";
 import Util, { AkitaError } from "./util";
 import { functionFields } from "./lexer";
-import { isNil, merge } from "lodash";
 import { inspect } from "util";
 import { akita_functions_mod } from "..";
 
@@ -19,6 +19,29 @@ export type object_data = record & {
 
 export type InterpreterOptions = {
 	lexer?: typeof default_lexer_options;
+};
+
+export type InterpreterDebugOptions = {
+	/**
+	 * If it is due or not to show the new input
+	 */
+	parsed_input?: boolean;
+	/**
+	 * If it is due or not to show the input received
+	 */
+	gived_input?: boolean;
+	/**
+	 * If it is due or not that show the data of the Lexer
+	 */
+	lexer?: boolean;
+	/**
+	 * This only adds color to the logs you do
+	 */
+	executions?: boolean;
+	/**
+	 * If it is due or not to show the final object data
+	 */
+	final?: boolean;
 };
 
 export class Interpreter {
@@ -83,7 +106,6 @@ export class Interpreter {
 			el.name.endsWith(".js")
 		)) {
 			try {
-				console.log("\u001b[94mReading %s...\u001b[0m", file.name);
 				let t = new (
 					(await import(file.name)) as { default: typeof VoidAkitaFunction }
 				).default();
@@ -103,11 +125,23 @@ export class Interpreter {
 		data.input = data.input.replace(af.id, res_id);
 		data.results[res_id] = rpr;
 	}
-	public async solve(data: Partial<object_data>, debug = false) {
-		debug &&
-			console.log("[ DEBUG ]   Gived Input\n\x1b[31m%s\x1b[0m", this.lexer.input);
-		const { input, functions_array } = this.lexer.main(debug);
-		debug && console.log("[ DEBUG ]   Parsed\n\x1b[31m%s\x1b[0m", input);
+	public async solve(
+		data: Partial<object_data>,
+		debug: boolean | InterpreterDebugOptions = false
+	) {
+		if ((isObject(debug) && debug.gived_input) || debug === true)
+			console.log(
+				`\u001b[44m[ DEBUG ]\u001b[0m Gived Input  \u001b[90m${new Date().toLocaleString()}\n\u001b[31m%s\u001b[0m\n`,
+				this.lexer.input
+			);
+		const { input, functions_array } = this.lexer.main(
+			isObject(debug) ? debug.lexer : debug
+		);
+		if ((isObject(debug) && debug.parsed_input) || debug === true)
+			console.log(
+				`\u001b[44m[ DEBUG ]\u001b[0m Parsed  \u001b[90m${new Date().toLocaleString()}\n\u001b[31m%s\u001b[0m\n`,
+				input
+			);
 		merge(data, {
 			results: {},
 			parents: [],
@@ -117,7 +151,10 @@ export class Interpreter {
 			epd: null,
 			input,
 		});
-		debug && console.log("[ DEBUG ]   Executions\x1b[34m");
+		if ((isObject(debug) && debug.executions) || debug === true)
+			console.log(
+				`\u001b[44m[ DEBUG ]\u001b[0m Executions  \u001b[90m${new Date().toLocaleString()}\u001b[34m`
+			);
 		for (const af of functions_array) {
 			const finded = Interpreter.functions[af.name];
 			if (af.prototype) {
@@ -143,11 +180,14 @@ export class Interpreter {
 			finded.type === "parent" && data.parents?.pop();
 			data.epd = null;
 		}
-		debug &&
+		if ((isObject(debug) && debug.executions) || debug === true)
+			console.log("\u001b[0m\n");
+		if ((isObject(debug) && debug.final) || debug === true) {
 			console.log(
-				"\x1b[0m[ DEBUG ]   Final\n%s",
+				`\u001b[44m[ DEBUG ]\u001b[0m Final  \u001b[90m${new Date().toLocaleString()}}\n%s\n\u001b[0m`,
 				inspect(data, { depth: null, colors: true })
 			);
+		}
 		return data;
 	}
 }

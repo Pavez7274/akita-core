@@ -33,7 +33,7 @@ export declare class Lexer {
     constructor(options?: typeof default_lexer_options);
     set_input(n: string): void;
     set_functions(functions: string[]): this;
-    private find_function;
+    find_function(x: string): string | undefined;
     private match_functions;
     lex_inside(after: string, functions_array: Array<akitaFunction>): {
         fields: functionFields[];

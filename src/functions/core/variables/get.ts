@@ -1,11 +1,11 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
-import { get, invoke, isFunction, result } from "lodash";
-import { akitaFunction } from "../../classes/lexer";
+import { Interpreter, object_data } from "../../../classes/interpreter";
+import { akitaFunction } from "../../../classes/lexer";
+import { get, isFunction, result } from "lodash";
 import {
 	AbstractAkitaFunction,
 	requiredFields,
 	RequiredField,
-} from "../../classes/function";
+} from "../../../classes/function";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function _(object: object, key: string, ...rest: unknown[]) {
@@ -30,16 +30,6 @@ export default class extends AbstractAkitaFunction {
 				data,
 				self,
 				get(data.extra.variables, self.fields[0].value, self.fields[1]?.value)
-			);
-		else if (self.prototype === ".invoke")
-			this.resolve(
-				data,
-				self,
-				invoke(
-					data.extra.variables,
-					self.fields[0].value,
-					...self.fields.slice(1).map(({ value }) => value)
-				)
 			);
 		else
 			this.resolve(

@@ -1,10 +1,10 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
+import { Interpreter, object_data } from "../../../classes/interpreter";
 import {
 	AbstractAkitaFunction,
 	RequiredField,
 	requiredFields,
-} from "../../classes/function";
-import { akitaFunction } from "../../classes/lexer";
+} from "../../../classes/function";
+import { akitaFunction } from "../../../classes/lexer";
 import { set } from "lodash";
 
 export default class extends AbstractAkitaFunction {

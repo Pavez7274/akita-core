@@ -1,5 +1,9 @@
+# Source
 tsconfig.json
+test/
+src/
+
+# Configs
+.prettierrc.yml
 .gitignore
 .eslintrc
-test.js
-src/

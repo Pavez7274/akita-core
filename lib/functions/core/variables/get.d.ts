@@ -1,6 +1,6 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
-import { akitaFunction } from "../../classes/lexer";
-import { AbstractAkitaFunction, RequiredField } from "../../classes/function";
+import { Interpreter, object_data } from "../../../classes/interpreter";
+import { akitaFunction } from "../../../classes/lexer";
+import { AbstractAkitaFunction, RequiredField } from "../../../classes/function";
 export default class extends AbstractAkitaFunction {
     name: string;
     prototypes: string[];
