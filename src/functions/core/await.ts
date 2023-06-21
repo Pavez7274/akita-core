@@ -7,7 +7,7 @@ import {
 import { akitaFunction } from "../../classes/lexer";
 
 export default class extends AbstractAkitaFunction {
-	name = "import";
+	name = "await";
 	@requiredFields(2)
 	async solve(
 		this: Interpreter,
