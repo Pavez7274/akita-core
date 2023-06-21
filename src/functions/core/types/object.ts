@@ -10,7 +10,7 @@ import Util, { AkitaError } from "../../../classes/util";
 
 export default class _object extends AbstractAkitaFunction {
 	name = "object";
-	@requiredFields(2)
+	@requiredFields(1)
 	async solve(
 		this: Interpreter,
 		self: RequiredField<akitaFunction, "fields">,

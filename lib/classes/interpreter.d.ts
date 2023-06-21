@@ -18,7 +18,9 @@ export declare type InterpreterDebugOptions = {
     gived_input?: boolean;
     lexer?: boolean;
     executions?: boolean;
-    final?: boolean;
+    final?: boolean | {
+        depth: number;
+    };
 };
 export declare class Interpreter {
     readonly options?: InterpreterOptions | undefined;
@@ -30,7 +32,7 @@ export declare class Interpreter {
     static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>): void;
     static load_core_functions(cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     static load_functions(mod: string, cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
-    resolve<T = unknown>(data: object_data, af: akitaFunction, rpr: T): void;
+    resolve<T, D extends object_data>(data: D, af: akitaFunction, rpr: T): void;
     solve(data: Partial<object_data>, debug?: boolean | InterpreterDebugOptions): Promise<Partial<object_data>>;
 }
 //# sourceMappingURL=interpreter.d.ts.map

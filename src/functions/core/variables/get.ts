@@ -17,7 +17,7 @@ function _(object: object, key: string, ...rest: unknown[]) {
 
 export default class extends AbstractAkitaFunction {
 	name = "get";
-	prototypes: string[] = [".strict", ".invoke"];
+	prototypes: string[] = [".strict"];
 	@requiredFields()
 	async solve(
 		this: Interpreter,

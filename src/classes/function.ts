@@ -43,19 +43,16 @@ export function requiredFields(min = Infinity) {
 }
 
 // classes
-export abstract class AbstractAkitaFunction {
+export abstract class AbstractAkitaFunction<T = object_data> {
 	type: "unknown" | "parent" = "unknown";
 	prototypes: Array<string> = [];
+	name_in?: string;
 	abstract name: string;
-	abstract solve(
-		this: Interpreter,
-		self: akitaFunction,
-		data: object_data
-	): Promise<object_data>;
+	abstract solve(this: Interpreter, self: akitaFunction, data: T): Promise<T>;
 }
 export class VoidAkitaFunction extends AbstractAkitaFunction {
-	override name = "undefined";
-	override solve(): Promise<object_data> {
+	name = "void_akita_function";
+	solve(): Promise<object_data> {
 		throw new Error("void function");
 	}
 }

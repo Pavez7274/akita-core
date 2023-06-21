@@ -49,7 +49,7 @@ export class Lexer {
 	public set_functions(functions: string[]): this {
 		this.functions = functions.sort((a, b) => b.length - a.length);
 		this.regexp = new RegExp(
-			`(${this.functions.map(escapeRegExp).join("|")})(\\.[A-z_])?`,
+			`(${this.functions.map(escapeRegExp).join("|")})(\\.[a-zA-Z]+)?`,
 			this.options.insensitive ? "gi" : "g"
 		);
 		return this;

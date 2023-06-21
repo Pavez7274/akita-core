@@ -5,6 +5,7 @@ import {
 	requiredFields,
 } from "../../classes/function";
 import { akitaFunction } from "../../classes/lexer";
+import { inspect } from "util";
 
 export default class extends AbstractAkitaFunction {
 	name = "log";
@@ -15,7 +16,9 @@ export default class extends AbstractAkitaFunction {
 		data: object_data
 	) {
 		await this.solve_fields(data, self);
-		console.log(...self.fields.map(({ value }) => value));
+		console.log(
+			...self.fields.map(({ value }) => inspect(value, { depth: null }))
+		);
 		this.resolve(data, self, "");
 		return data;
 	}

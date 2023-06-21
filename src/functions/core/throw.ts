@@ -9,7 +9,7 @@ import {
 
 export default class extends AbstractAkitaFunction {
 	name = "throw";
-	@requiredFields(2)
+	@requiredFields(1)
 	async solve(
 		this: Interpreter,
 		self: RequiredField<akitaFunction, "fields">,
@@ -17,8 +17,9 @@ export default class extends AbstractAkitaFunction {
 	) {
 		await this.solve_fields(data, self);
 		const error = new Error(self.fields[0].value);
-		isNil(self.fields[1].value) || (error.name = self.fields[1].value);
+		isNil(self.fields[1]?.value) || (error.name = self.fields[1].value);
 		throw error;
+		// simplemente para evitar errores
 		return data;
 	}
 }

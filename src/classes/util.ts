@@ -95,6 +95,7 @@ export default class Util {
 		return isNaN(number) ? !this.falsys.includes(str) : number > 0;
 	}
 	static get_files(mod: string, result: Dirent[] = []) {
+		// mod = require.resolve(mod);
 		const files = readdirSync(mod, { withFileTypes: true });
 		for (const file of files) {
 			file.name = `${mod}/${file.name}`;

@@ -1,6 +1,6 @@
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { Lexer, default_lexer_options, akitaFunction } from "./lexer";
-import { isNil, isObject, merge } from "lodash";
+import { isNil, isObject, merge, values } from "lodash";
 import Util, { AkitaError } from "./util";
 import { functionFields } from "./lexer";
 import { inspect } from "util";
@@ -41,7 +41,11 @@ export type InterpreterDebugOptions = {
 	/**
 	 * If it is due or not to show the final object data
 	 */
-	final?: boolean;
+	final?:
+		| boolean
+		| {
+				depth: number;
+		  };
 };
 
 export class Interpreter {
@@ -110,7 +114,7 @@ export class Interpreter {
 					(await import(file.name)) as { default: typeof VoidAkitaFunction }
 				).default();
 				if (cb) t = await cb(t);
-				this.functions[t.name] = t;
+				this.functions[t.name_in || t.name] = t;
 			} catch (error) {
 				console.log(
 					"\u001b[31mThere was an error loading %s\n%s\u001b[0m",
@@ -120,7 +124,7 @@ export class Interpreter {
 			}
 		}
 	}
-	public resolve<T = unknown>(data: object_data, af: akitaFunction, rpr: T) {
+	public resolve<T, D extends object_data>(data: D, af: akitaFunction, rpr: T) {
 		const res_id = `SYSTEM_RESULT(${af._id})`;
 		data.input = data.input.replace(af.id, res_id);
 		data.results[res_id] = rpr;
@@ -156,7 +160,10 @@ export class Interpreter {
 				`\u001b[44m[ DEBUG ]\u001b[0m Executions  \u001b[90m${new Date().toLocaleString()}\u001b[34m`
 			);
 		for (const af of functions_array) {
-			const finded = Interpreter.functions[af.name];
+			const finded = values(Interpreter.functions).find(
+				(f) => f.name_in === af.name || f.name === af.name
+			);
+			if (isNil(finded)) continue;
 			if (af.prototype) {
 				if (!finded.prototypes.includes(af.prototype))
 					throw new AkitaError(
@@ -165,17 +172,15 @@ export class Interpreter {
 				else if (finded.prototypes.length === 0)
 					throw new AkitaError(`${af.name} doesn't have prototypes`);
 			}
-			if (finded.type === "parent") data.parents?.push(finded.name);
+			if (finded.type === "parent")
+				data.parents?.push(finded.name_in || finded.name);
 			try {
 				data = await finded.solve.apply(this, [af, <object_data>data]);
 			} catch (error) {
-				if (data.parents?.length === 0 || !data.parents?.includes("$try"))
-					throw error;
-				else if (data.parents.includes("$try")) {
-					data.epd = "catch";
+				if (finded.name_in === "akita-core:try") {
 					(<object_data["extra"]>data.extra).error = error;
 					data = await finded.solve.apply(this, [af, <object_data>data]);
-				}
+				} else throw error;
 			}
 			finded.type === "parent" && data.parents?.pop();
 			data.epd = null;
@@ -184,8 +189,11 @@ export class Interpreter {
 			console.log("\u001b[0m\n");
 		if ((isObject(debug) && debug.final) || debug === true) {
 			console.log(
-				`\u001b[44m[ DEBUG ]\u001b[0m Final  \u001b[90m${new Date().toLocaleString()}}\n%s\n\u001b[0m`,
-				inspect(data, { depth: null, colors: true })
+				`\u001b[44m[ DEBUG ]\u001b[0m Final  \u001b[90m${new Date().toLocaleString()}\n\u001b[0m%s\n`,
+				inspect(data, {
+					depth: isObject(debug) && isObject(debug.final) ? debug.final.depth : null,
+					colors: true,
+				})
 			);
 		}
 		return data;
