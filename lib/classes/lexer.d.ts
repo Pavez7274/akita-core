@@ -1,48 +1,74 @@
+export declare enum Operators {
+    "==" = "equal",
+    "===" = "strict equal",
+    "!=" = "not equal",
+    "!==" = "strict not equal",
+    ">" = "greater",
+    "<" = "lesser",
+    ">=" = "greater or equal",
+    "<=" = "lesser or equal",
+    "=" = "assign"
+}
 export interface matchedFunction {
     prototype?: string;
+    position: number;
+    length: number;
     match: string;
     name: string;
-    pos: number;
-    len: number;
 }
-export interface functionFields {
-    overloads: akitaFunction[];
-    value: string;
+export declare class LexerError extends Error {
+    constructor(property: string, header: string, explain: string);
 }
-export interface akitaFunction {
-    prototype?: string;
-    fields?: functionFields[];
-    inside?: string;
-    total: string;
-    name: string;
-    pos: number;
-    _id: number;
-    id: string;
-}
-export declare const default_lexer_options: {
-    insensitive?: boolean;
-    argument?: string;
-    opener?: string;
-    closer?: string;
+export declare type LexerAkitaFunctionField<T> = {
+    overloads: LexerAkitaFunction<string>[];
+    value: T;
 };
+export declare class LexerAkitaFunction<T> {
+    options: lexer_options;
+    matched: matchedFunction;
+    readonly uid: string;
+    fields: LexerAkitaFunctionField<T>[];
+    constructor(options: lexer_options, matched: matchedFunction, uid: string);
+    get identifier(): string;
+    get position(): number;
+    get name(): string;
+    get prototype(): string | undefined;
+    get inside(): string;
+    get total(): string;
+    toJSON(): {
+        identifier: string;
+        position: number;
+        fields: LexerAkitaFunctionField<T>[];
+        name: string;
+    };
+}
+export interface lexer_options {
+    insensitive: boolean;
+    argument: string;
+    opener: string;
+    closer: string;
+}
 export declare class Lexer {
-    private options;
-    private regexp;
+    default_options: Partial<lexer_options>;
+    static readonly CONDITION_EXPRESSION: RegExp;
+    static readonly SAF_EXPRESSION: RegExp;
+    static readonly SAR_EXPRESSION: RegExp;
+    regular_expression: string;
     private functions;
-    input: string;
-    constructor(options?: typeof default_lexer_options);
-    set_input(n: string): void;
+    constructor(default_options?: Partial<lexer_options>);
+    static generateToken(): string;
     set_functions(functions: string[]): this;
     find_function(x: string): string | undefined;
-    private match_functions;
-    lex_inside(after: string, functions_array: Array<akitaFunction>): {
-        fields: functionFields[];
+    match_functions(input: string, options: lexer_options): matchedFunction[];
+    inside(options: lexer_options, after: string, block: Array<LexerAkitaFunction<unknown>>): {
+        fields: LexerAkitaFunctionField<string>[];
         inside: string;
-        functions_array: akitaFunction[];
+        block: LexerAkitaFunction<unknown>[];
     };
-    main(debug?: boolean): {
-        functions_array: akitaFunction[];
+    lex(input: string, options?: Partial<lexer_options>, debug?: boolean): {
+        block: LexerAkitaFunction<unknown>[];
         input: string;
     };
+    resolve(input: string, { opener, closer, argument }: lexer_options): string;
 }
 //# sourceMappingURL=lexer.d.ts.map

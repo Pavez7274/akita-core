@@ -2,7 +2,19 @@ import { parse, DeserializeOptions } from "hjson";
 import { object_data } from "./interpreter";
 import { Dirent, readdirSync } from "fs";
 import { split } from "lodash";
+import { Lexer } from "./lexer";
 
+export function iterate<T, R>(
+	iterator: IterableIterator<T>,
+	cb: (value: T, index: number, iter: IterableIterator<T>) => R
+) {
+	let item: IteratorResult<T, R>,
+		index = 0;
+	while ((item = iterator.next())) {
+		if (item.done) break;
+		cb(item.value, index++, iterator);
+	}
+}
 export class AkitaError extends Error {
 	constructor(msg: string) {
 		super("\u001b[41m".concat(msg, "\u001b[0m"));
@@ -104,8 +116,8 @@ export default class Util {
 		return result;
 	}
 	static interpolate_strig(field: string, data: object_data) {
-		return field.includes("SYSTEM_RESULT")
-			? field.replace(/SYSTEM_RESULT\(\d+\)/g, (m) => `${data.results[m]}`)
+		return field.includes("SAR")
+			? field.replace(Lexer.SAR_EXPRESSION, (m) => `${data.results[m]}`)
 			: field;
 	}
 }

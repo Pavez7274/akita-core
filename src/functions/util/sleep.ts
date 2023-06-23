@@ -1,19 +1,20 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
-import { akitaFunction } from "../../classes/lexer";
-import { setTimeout } from "timers/promises";
-import { noop } from "lodash";
 import {
 	AbstractAkitaFunction,
-	RequiredField,
+	LexerAkitaFunction,
 	requiredFields,
-} from "../../classes/function";
+	Interpreter,
+	object_data,
+} from "../../classes/index";
+import { setTimeout } from "timers/promises";
+import { noop } from "lodash";
 
 export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:sleep";
 	name = "sleep";
 	@requiredFields(1)
 	async solve(
 		this: Interpreter,
-		self: RequiredField<akitaFunction, "fields">,
+		self: LexerAkitaFunction<unknown>,
 		data: object_data
 	): Promise<object_data> {
 		await this.solve_fields(data, self);

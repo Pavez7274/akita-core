@@ -1,10 +1,14 @@
-import { Interpreter, object_data } from "../../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../../classes/function";
-import { akitaFunction } from "../../../classes/lexer";
+import {
+	AbstractAkitaFunction,
+	LexerAkitaFunction,
+	Interpreter,
+	object_data,
+} from "../../../classes/index";
 
-export default class _null extends AbstractAkitaFunction {
+export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:null";
 	name = "null";
-	async solve(this: Interpreter, self: akitaFunction, data: object_data) {
+	async solve(this: Interpreter, self: LexerAkitaFunction<null>, data: object_data) {
 		if (self.fields) await this.solve_fields(data, self);
 		this.resolve(data, self, null);
 		return data;

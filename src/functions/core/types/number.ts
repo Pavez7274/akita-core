@@ -1,9 +1,13 @@
-import { Interpreter, object_data } from "../../../classes/interpreter";
-import { AbstractAkitaFunction } from "../../../classes/function";
+import {
+	AbstractAkitaFunction,
+	LexerAkitaFunction,
+	Interpreter,
+	object_data,
+} from "../../../classes/index";
 import { get, invoke, isFunction, isNil } from "lodash";
-import { akitaFunction } from "../../../classes/lexer";
 
-export default class _number extends AbstractAkitaFunction {
+export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:number";
 	name = "number";
 	prototypes = [
 		".POSITIVE_INFINITY",
@@ -22,7 +26,11 @@ export default class _number extends AbstractAkitaFunction {
 		".isNaN",
 	];
 
-	async solve(this: Interpreter, self: akitaFunction, data: object_data) {
+	async solve(
+		this: Interpreter,
+		self: LexerAkitaFunction<string>,
+		data: object_data
+	) {
 		if (isNil(self.inside) || isNil(self.fields))
 			this.resolve(data, self, Number);
 		else {

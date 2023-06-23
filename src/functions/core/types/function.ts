@@ -1,22 +1,23 @@
-import { Interpreter, object_data } from "../../../classes/interpreter";
 import {
 	AbstractAkitaFunction,
-	RequiredField,
+	LexerAkitaFunction,
 	requiredFields,
-} from "../../../classes/function";
-import { akitaFunction } from "../../../classes/lexer";
+	Interpreter,
+	object_data,
+} from "../../../classes";
 
 const AsyncFunction = async function () {
 	null;
 }.constructor;
 
-export default class _function extends AbstractAkitaFunction {
+export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:function";
 	name = "function";
 	prototypes = [".async"];
 	@requiredFields()
 	async solve(
 		this: Interpreter,
-		self: RequiredField<akitaFunction, "fields">,
+		self: LexerAkitaFunction<string>,
 		data: object_data
 	) {
 		await this.solve_fields(data, self);

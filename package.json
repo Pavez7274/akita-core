@@ -5,6 +5,7 @@
 		"hjson": "^3.2.2",
 		"lodash": "^4.17.21",
 		"math-expression-evaluator": "^2.0.2",
+		"module-alias": "^2.2.2",
 		"tslib": "^2.5.2"
 	},
 	"devDependencies": {
@@ -15,8 +16,11 @@
 		"@typescript-eslint/parser": "^5.56.0",
 		"ts-node": "^10.9.1"
 	},
+	"_moduleAliases": {
+		"@class": "./lib/classes/"
+	},
 	"name": "@kodeko/akita-core",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"main": "lib/index.js",
 	"scripts": {
 		"lint": "eslint --fix .\\src\\",

@@ -1,25 +1,26 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
 import {
 	AbstractAkitaFunction,
+	LexerAkitaFunction,
 	requiredFields,
-	RequiredField,
-} from "../../classes/function";
-import { akitaFunction } from "../../classes/lexer";
+	Interpreter,
+	object_data,
+} from "../../classes/index";
 import { result } from "lodash";
 
 export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:this";
 	name = "this";
 	@requiredFields(1)
 	async solve(
 		this: Interpreter,
-		self: RequiredField<akitaFunction, "fields">,
+		self: LexerAkitaFunction<unknown>,
 		data: object_data
 	) {
 		await this.solve_fields(data, self);
 		this.resolve(
 			data,
 			self,
-			result(this, self.fields[0].value, self.fields[1]?.value)
+			result(this, self.fields[0].value as string, self.fields[1]?.value)
 		);
 		return data;
 	}

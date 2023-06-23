@@ -2,6 +2,7 @@
 import { DeserializeOptions } from "hjson";
 import { object_data } from "./interpreter";
 import { Dirent } from "fs";
+export declare function iterate<T, R>(iterator: IterableIterator<T>, cb: (value: T, index: number, iter: IterableIterator<T>) => R): void;
 export declare class AkitaError extends Error {
     constructor(msg: string);
 }

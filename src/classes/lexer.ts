@@ -1,102 +1,294 @@
-import { escapeRegExp, isNil, merge, toLower } from "lodash";
+import { escapeRegExp, isEmpty, isNil, merge, toLower } from "lodash";
 import { inspect } from "util";
 
+export enum Operators {
+	"==" = "equal",
+	"===" = "strict equal",
+	"!=" = "not equal",
+	"!==" = "strict not equal",
+	">" = "greater",
+	"<" = "lesser",
+	">=" = "greater or equal",
+	"<=" = "lesser or equal",
+	"=" = "assign",
+}
+
+/**
+ * Represents a matched function.
+ */
 export interface matchedFunction {
 	prototype?: string;
+	position: number;
+	length: number;
 	match: string;
 	name: string;
-	pos: number;
-	len: number;
-}
-export interface functionFields {
-	overloads: akitaFunction[];
-	value: string;
-}
-export interface akitaFunction {
-	prototype?: string;
-	fields?: functionFields[];
-	inside?: string;
-	total: string;
-	name: string;
-	pos: number;
-	_id: number;
-	id: string;
 }
 
-export const default_lexer_options: {
-	insensitive?: boolean;
-	argument?: string;
-	opener?: string;
-	closer?: string;
-} = {
-	insensitive: false,
-	argument: ";",
-	opener: "[",
-	closer: "]",
+export class LexerError extends Error {
+	constructor(property: string, header: string, explain: string) {
+		super(
+			`\x1b[34m[Lexer.${property}]\x1b[0m-> \x1b[31m${header}\n\t\x1b[90m${explain}\x1b[0m`
+		);
+		this.name = "LexerError";
+	}
+}
+
+export type LexerAkitaFunctionField<T> = {
+	overloads: LexerAkitaFunction<string>[];
+	value: T;
 };
+export class LexerAkitaFunction<T> {
+	/**
+	 * Array of objects representing fields with overloads and a value.
+	 * @type {LexerAkitaFunctionField<T>[]}
+	 */
+	public fields: LexerAkitaFunctionField<T>[] = [];
+
+	/**
+	 * Creates an instance of the constructor.
+	 * @param {lexer_options} options - The lexer options.
+	 * @param {matchedFunction} matched - The matched function.
+	 * @param {string} uid - The unique identifier.
+	 * @constructor
+	 */
+	constructor(
+		public options: lexer_options,
+		public matched: matchedFunction,
+		public readonly uid: string
+	) {}
+
+	/**
+	 * Gets the function identifier.
+	 */
+	public get identifier(): string {
+		return `SAF(${this.uid})`;
+	}
+
+	/**
+	 * Gets the match index/position.
+	 * @returns {number}
+	 */
+	public get position(): number {
+		return this.matched.position;
+	}
+
+	/**
+	 * Gets the name of the function.
+	 * @returns {string}
+	 */
+	public get name(): string {
+		return this.matched.name;
+	}
+
+	/**
+	 * Gets the prototype of the function.
+	 * @returns {string | undefined}
+	 */
+	public get prototype(): string | undefined {
+		return this.matched.prototype;
+	}
+
+	/**
+	 * Gets the "inside" of the function.
+	 * @example
+	 * // function: some(hi;bye)
+	 * console.log(<AkitaFunction>.fields);
+	 * // [{ overloads: [], value: "hi" }, { overloads: [], value: "bye" }]
+	 * console.log(<AkitaFunction>.inside);
+	 * // hi;bye
+	 * @returns {string}
+	 */
+	public get inside(): string {
+		return this.fields.map((n) => n.value).join(this.options.argument);
+	}
+
+	/**
+	 * Gets the total function (name + prototype + fields).
+	 * @returns {string}
+	 */
+	public get total(): string {
+		return this.matched.name.concat(
+			this.matched.prototype ?? "",
+			this.inside
+				? this.options.opener.concat(this.inside, this.options.closer)
+				: ""
+		);
+	}
+
+	public toJSON() {
+		return {
+			identifier: this.identifier,
+			position: this.position,
+			fields: this.fields.map((saf) => {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				saf.overloads = saf.overloads.map((_) => _.toJSON());
+				return saf;
+			}),
+			name: this.name,
+		};
+	}
+}
+
+/**
+ * Options for the lexer.
+ */
+export interface lexer_options {
+	insensitive: boolean;
+	argument: string;
+	opener: string;
+	closer: string;
+}
 
 export class Lexer {
-	private options = default_lexer_options;
-	private regexp: RegExp | null = null;
+	/**
+	 *
+	 */
+	static readonly CONDITION_EXPRESSION =
+		/([^()\s;]+(\([^)]*\))?)(\s*([=!<>]+)\s*)([^()\s;]+(\([^)]*\))?)/g;
+
+	/**
+	 * Regular expression pattern for SAF expressions.
+	 * Matches the format "SAF(x)" where 'x' is a 15-character alphanumeric string.
+	 * Note: This expression is case-sensitive.
+	 */
+	static readonly SAF_EXPRESSION = /^SAF\([a-z0-9]{15}\)$/g;
+
+	/**
+	 * Regular expression pattern for SAF expressions.
+	 * Matches the format "SAF(x)" where 'x' is a 15-character alphanumeric string.
+	 * Note: This expression is case-sensitive.
+	 */
+	static readonly SAR_EXPRESSION = /^SAR\([a-z0-9]{15}\)$/g;
+
+	/**
+	 * Regular expression used to find functions.
+	 * @type {string}
+	 */
+	public regular_expression = "";
+
+	/**
+	 * Array that stores the names of the functions that can be found.
+	 * @type {string[]}
+	 * @private
+	 */
 	private functions: string[] = [];
-	public input = "";
-	constructor(options?: typeof default_lexer_options) {
-		merge(this.options, options);
+
+	constructor(
+		public default_options: Partial<lexer_options> = {
+			insensitive: false,
+			argument: ";",
+			opener: "(",
+			closer: ")",
+		}
+	) {}
+
+	/**
+	 * Generates a unique token composed of a timestamp and random characters.
+	 * @returns {string} The generated token.
+	 * @static
+	 */
+	static generateToken(): string {
+		const timestamp = Date.now().toString(36),
+			random = Math.random().toString(36).substring(2, 9),
+			token = timestamp + random;
+		return token;
 	}
-	public set_input(n: string) {
-		this.input = n;
-	}
+
+	/**
+	 * Sets the array of function names and updates the regular expression accordingly.
+	 * @param {string[]} functions - An array of function names.
+	 * @returns {this} The instance of the current lexer.
+	 */
 	public set_functions(functions: string[]): this {
 		this.functions = functions.sort((a, b) => b.length - a.length);
-		this.regexp = new RegExp(
-			`(${this.functions.map(escapeRegExp).join("|")})(\\.[a-zA-Z]+)?`,
-			this.options.insensitive ? "gi" : "g"
-		);
+		this.regular_expression = `(${this.functions
+			.map(escapeRegExp)
+			.join("|")})(\\.[a-zA-Z]+)?`;
 		return this;
 	}
-	public find_function(x: string) {
+
+	/**
+	 * Finds a function in the array of function names, ignoring case sensitivity.
+	 * @param {string} x - The function name to search for.
+	 * @returns {string | undefined} The matching function name, or undefined if not found.
+	 */
+	public find_function(x: string): string | undefined {
 		return this.functions.find((f) => toLower(f) === toLower(x));
 	}
-	private match_functions(): matchedFunction[] {
-		if (isNil(this.regexp)) throw new Error("Expected regex value!");
-		const maches = this.input.matchAll(this.regexp),
-			result: matchedFunction[] = [];
-		for (let i = maches.next(); !isNil(i); i = maches.next()) {
-			if (i.done) break;
-			result.push({
-				name: this.options.insensitive
-					? (this.find_function(i.value[1]) as string)
-					: i.value[1],
-				pos: i.value.index as number,
-				len: i.value[0].length,
-				match: i.value[0],
-				prototype: i.value[2],
-			});
-		}
-		return result;
+
+	/**
+	 * Matches functions in the input string based on the provided regular expression and options.
+	 * @param {string} input - The input string to search for function matches.
+	 * @param {lexer_options} options - The options for the lexer, including case sensitivity.
+	 * @throws {Error} Throws an error if the regular expression value is not set.
+	 * @returns {matchedFunction[]} An array of matchedFunction objects representing the matched functions.
+	 */
+	public match_functions(
+		input: string,
+		options: lexer_options
+	): matchedFunction[] {
+		if (isNil(this.regular_expression) || isEmpty(this.regular_expression))
+			throw new LexerError(
+				"match_functions",
+				"Expected regular expression value!",
+				"The Lexer expected a value for the regular expression (Lexer.regular_expression) but instead an empty string or a falsy value was provided"
+			);
+		const insensitive = options.insensitive ?? this.default_options;
+		return Array.from(
+			input.matchAll(
+				new RegExp(this.regular_expression, insensitive ? "gi" : "g")
+			),
+			(k): matchedFunction => ({
+				prototype: k[2],
+				position: Number(k.index),
+				length: k[0].length,
+				match: k[0],
+				name: insensitive ? (this.find_function(k[1]) as string) : k[1],
+			})
+		);
 	}
-	public lex_inside(after: string, functions_array: Array<akitaFunction>) {
-		const fields: functionFields[] = [{ value: "", overloads: [] }];
-		let escape = false,
-			closed = false,
-			inside = "",
-			depth = 0;
-		for (const char of after.slice(1)) {
+
+	/**
+	 * Processes the contents inside the brackets of an Akita function.
+	 * @param options The lexer options.
+	 * @param after The substring after the opening bracket.
+	 * @param block The array of LexerAkitaFunction instances.
+	 * @returns An object containing the processed fields, the inside string, and the modified block.
+	 * @throws {LexerError} If there is a mismatch in the number of openers and closers.
+	 */
+	public inside(
+		options: lexer_options,
+		after: string,
+		block: Array<LexerAkitaFunction<unknown>>
+	) {
+		const fields: LexerAkitaFunctionField<string>[] = [
+			{ overloads: [], value: "" },
+		];
+		let escape = false;
+		let closed = false;
+		let inside = "";
+		let depth = 0;
+
+		for (let i = 1; i < after.length; i++) {
+			const char = after[i];
+
 			if (escape) {
 				inside += char;
 				escape = false;
-			} else if (char === "\\") escape = true;
-			else if (char === this.options.argument) {
-				fields.push({ value: "", overloads: [] });
+			} else if (char === "\\") {
+				escape = true;
+			} else if (char === options.argument) {
+				fields.push({ overloads: [], value: "" });
 				inside += char;
-			} else if (char === this.options.closer && depth <= 0) {
+			} else if (char === options.closer && depth <= 0) {
 				closed = true;
 				break;
-			} else if (char === this.options.opener) {
+			} else if (char === options.opener) {
 				fields[fields.length - 1].value += char;
 				inside += char;
 				depth++;
-			} else if (char === this.options.closer && depth > 0) {
+			} else if (char === options.closer && depth > 0) {
 				fields[fields.length - 1].value += char;
 				inside += char;
 				depth--;
@@ -105,51 +297,143 @@ export class Lexer {
 				inside += char;
 			}
 		}
+
 		for (let index = 0; index < fields.length; index++) {
-			const possible_functions = fields[index].value.match(
-				/SYSTEM_FUNCTION\(\d+\)/g
-			);
-			if (possible_functions?.length) {
-				for (const possible_function of possible_functions) {
-					const pos = functions_array.findIndex((n) => n.id === possible_function);
-					if (pos !== -1) {
-						fields[index].overloads.push(functions_array[pos]);
-						functions_array.splice(pos, 1);
+			const overloads = fields[index].value.match(Lexer.SAF_EXPRESSION);
+			if (overloads && overloads.length > 0) {
+				for (const overload of overloads) {
+					const maybe = block.findIndex((saf) => saf.identifier === overload);
+					if (maybe !== -1) {
+						fields[index].overloads.push(block[maybe] as LexerAkitaFunction<string>);
+						block.splice(maybe, 1);
 					}
 				}
 			}
 		}
-		if (!closed) throw new SyntaxError("Missing " + this.options.closer);
-		return { fields, inside, functions_array };
-	}
-	main(debug = false) {
-		const maches = this.match_functions(),
-			block: Array<akitaFunction> = [];
-		let input = this.input;
-		for (let index = maches.length - 1; index >= 0; index--) {
-			const match = maches[index],
-				akitaFunction: akitaFunction = {
-					id: `SYSTEM_FUNCTION(${index})`,
-					prototype: match.prototype,
-					total: match.match,
-					name: match.name,
-					pos: match.pos,
-					_id: index,
-				},
-				after = input.slice(match.pos + match.len);
-			if (after.charAt(0) === this.options.opener) {
-				const { fields, inside } = this.lex_inside(after, block);
-				akitaFunction.total += this.options.opener + inside + this.options.closer;
-				akitaFunction.inside = inside;
-				akitaFunction.fields = fields;
-			}
-			block.unshift(akitaFunction);
-			input =
-				input.slice(0, match.pos) +
-				akitaFunction.id +
-				input.slice(match.pos + akitaFunction.total.length);
+
+		if (!closed) {
+			throw new LexerError(
+				"Lexer.inside",
+				"Missing closer!",
+				"The Lexer expected the same or greater number of closers than openers"
+			);
 		}
-		debug && console.log(inspect(block, { depth: null, colors: true }));
-		return { functions_array: block, input };
+
+		return { fields, inside, block };
+	}
+
+	/**
+	 * Lexes the input string and extracts Akita functions.
+	 * @param input The input string to lex.
+	 * @param options Optional lexer options to customize the lexing behavior.
+	 * @param debug Determines whether to enable debug mode or not.
+	 * @returns An object containing the lexed block of Akita functions and the modified input string.
+	 */
+	public lex(
+		input: string,
+		options: Partial<lexer_options> = {},
+		debug = false
+	) {
+		input = this.resolve(input, options as lexer_options);
+
+		if (debug) console.log("\n", input);
+		
+		options = merge(options, this.default_options);
+
+		// Match functions in the input string
+		const matches = this.match_functions(input, options as lexer_options);
+
+		let block: LexerAkitaFunction<unknown>[] = [];
+
+		// Process matches in reverse order
+		for (let index = matches.length - 1; index > -1; index--) {
+			// Create a new LexerAkitaFunction instance
+			const saf = new LexerAkitaFunction(
+				options as lexer_options,
+				matches[index],
+				Lexer.generateToken()
+			);
+
+			// Extract the substring after the function match
+			const after = input.slice(saf.position + saf.total.length);
+
+			// Check if there is an opening bracket after the function match
+			if (after.charAt(0) === options.opener) {
+				// Process the contents inside the brackets
+				const { block: iblock, fields } = this.inside(
+					options as lexer_options,
+					after,
+					block
+				);
+				block = iblock;
+				saf.fields = fields;
+			}
+
+			// Add the LexerAkitaFunction instance to the block
+			block.unshift(saf);
+
+			// Modify the input string by replacing the function match with its identifier
+			input = input
+				.slice(0, saf.position)
+				.concat(saf.identifier, input.slice(saf.position + saf.total.length));
+			if (debug) console.log("\n", input);
+		}
+
+		// Output the debug information if debug mode is enabled
+		if (debug) {
+			console.log(
+				inspect(
+					block.map((saf) => saf.toJSON()),
+					{ depth: null, colors: true }
+				)
+			);
+		}
+
+		return { block, input };
+	}
+
+	public resolve(input: string, { opener, closer, argument }: lexer_options) {
+		argument ??= this.default_options.argument as string;
+		opener ??= this.default_options.opener as string;
+		closer ??= this.default_options.closer as string;
+		for (const [match, left, symbol, right] of Array.from(
+			input.matchAll(Lexer.CONDITION_EXPRESSION),
+			(match) => [match[0], match[1], match[4], match[5]]
+		)) {
+			switch (symbol) {
+				case "==":
+				case "===":
+				case "!=":
+				case "!==":
+				case ">":
+				case "<":
+				case ">=":
+				case "<=":
+					input = input.replace(
+						match,
+						`akita-core:condition(${Operators[symbol]}${argument}${left};${right})`
+					);
+					continue;
+				case "=":
+					input = input.replace(
+						match,
+						`akita-core:set${opener}${left}${argument}${right}${closer}`
+					);
+					continue;
+				default:
+					continue;
+			}
+		}
+		return input;
 	}
 }
+
+// lexer test
+// const lex = new Lexer();
+// lex.set_functions(["hi", "boo", "waaa"]);
+// console.log(
+// 	inspect(
+// 		lex.lex("waaa(boo(asdf;asdf;123);boo) hi").block.map((saf) => saf.toJSON()),
+// 		{ depth: null, colors: true }
+// 	)
+// );

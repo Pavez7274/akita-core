@@ -1,10 +1,9 @@
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
-import { Lexer, default_lexer_options, akitaFunction } from "./lexer";
-import { isNil, isObject, merge, values } from "lodash";
+import { Lexer, LexerAkitaFunction, type lexer_options } from "./lexer";
+import { isEmpty, isNil, isObject, merge } from "lodash";
 import Util, { AkitaError } from "./util";
-import { functionFields } from "./lexer";
-import { inspect } from "util";
 import { akita_functions_mod } from "..";
+import { inspect } from "util";
 
 export type record = Record<string, unknown>;
 export type object_data = record & {
@@ -18,7 +17,7 @@ export type object_data = record & {
 };
 
 export type InterpreterOptions = {
-	lexer?: typeof default_lexer_options;
+	lexer?: lexer_options;
 };
 
 export type InterpreterDebugOptions = {
@@ -49,52 +48,65 @@ export type InterpreterDebugOptions = {
 };
 
 export class Interpreter {
-	static functions: Record<string, AbstractAkitaFunction> = {};
+	static functions: Array<AbstractAkitaFunction> = [];
 	public readonly lexer: Lexer;
 	constructor(readonly options?: InterpreterOptions) {
 		this.lexer = new Lexer(options?.lexer);
-		this.lexer.set_functions(Object.keys(Interpreter.functions));
+		this.lexer.set_functions(
+			Interpreter.functions
+				.map((abs) => {
+					const r = [abs.name];
+					abs.name_in && r.push(abs.name_in);
+					return r;
+				})
+				.flat(1)
+		);
 	}
 	async solve_fields(
 		data: object_data,
-		af: akitaFunction,
+		saf: LexerAkitaFunction<unknown>,
 		i?: number[],
 		s = 0,
 		e?: number
 	) {
-		if (isNil(af.fields)) return af;
-		for (let index = s; index < (<functionFields[]>af.fields).length; index++) {
+		if (isNil(saf.fields) || isEmpty(saf.fields)) return saf;
+		for (let index = s; index < saf.fields.length; index++) {
 			if (e === index) break;
 			if (i && i.includes(index)) continue;
-			af = await this.solve_field(data, af, index);
+			saf = await this.solve_field(data, saf, index);
 		}
-		return af;
+		return saf;
 	}
-	async solve_field(data: object_data, af: akitaFunction, index: number) {
-		if (isNil(af.fields) || isNil(af.fields[index])) return af;
+	async solve_field(
+		data: object_data,
+		saf: LexerAkitaFunction<unknown>,
+		index: number
+	) {
+		if (isNil(saf.fields) || isEmpty(saf.fields) || isNil(saf.fields[index]))
+			return saf;
 		const bass = data;
-		for (const overload of af.fields[index].overloads) {
-			data.input = af.fields[index].value;
-			const finded = Interpreter.functions[overload.name],
+		for (const overload of saf.fields[index].overloads) {
+			data.input = saf.fields[index].value as string;
+			const finded = Interpreter.functions.find(
+					(n) => n.name_in === overload.name || n.name === overload.name
+				) as AbstractAkitaFunction,
 				reject = await finded.solve.apply(this, [overload, data]);
 			if (reject.input) {
-				const results = reject.input.match(/SYSTEM_RESULT\(\d+\)/g);
+				const results = reject.input.match(Lexer.SAR_EXPRESSION);
 				if (results) {
 					if (reject.input === results[0])
-						af.fields[index].value = data.results[results[0]] as string;
-					else af.fields[index].value = Util.interpolate_strig(reject.input, data);
-				} else af.fields[index].value = reject.input;
-				af.inside = af.fields.map((f) => f.value).join("|");
-				af.total = `${af.name}[${af.inside}]`;
+						saf.fields[index].value = data.results[results[0]];
+					else saf.fields[index].value = Util.interpolate_strig(reject.input, data);
+				} else saf.fields[index].value = reject.input;
 			}
 		}
 		data.input = bass.input;
-		return af;
+		return saf;
 	}
 	static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>) {
 		for (const abs_based_function of abs_based_functions) {
-			const t = new abs_based_function();
-			Interpreter.functions[t.name] = t;
+			const abs = new abs_based_function();
+			Interpreter.functions.push(abs);
 		}
 	}
 	public static async load_core_functions(
@@ -110,11 +122,11 @@ export class Interpreter {
 			el.name.endsWith(".js")
 		)) {
 			try {
-				let t = new (
+				let abs = new (
 					(await import(file.name)) as { default: typeof VoidAkitaFunction }
 				).default();
-				if (cb) t = await cb(t);
-				this.functions[t.name_in || t.name] = t;
+				if (cb) abs = await cb(abs);
+				this.functions.push(abs);
 			} catch (error) {
 				console.log(
 					"\u001b[31mThere was an error loading %s\n%s\u001b[0m",
@@ -124,23 +136,32 @@ export class Interpreter {
 			}
 		}
 	}
-	public resolve<T, D extends object_data>(data: D, af: akitaFunction, rpr: T) {
-		const res_id = `SYSTEM_RESULT(${af._id})`;
-		data.input = data.input.replace(af.id, res_id);
+	public resolve<T, D extends object_data>(
+		data: D,
+		saf: LexerAkitaFunction<unknown>,
+		rpr: T
+	) {
+		const res_id = `SAR(${saf.uid})`;
+		data.input = data.input.replace(saf.identifier, res_id);
 		data.results[res_id] = rpr;
 	}
 	public async solve(
+		input: string,
+		options: Partial<lexer_options>,
 		data: Partial<object_data>,
 		debug: boolean | InterpreterDebugOptions = false
 	) {
 		if ((isObject(debug) && debug.gived_input) || debug === true)
 			console.log(
 				`\u001b[44m[ DEBUG ]\u001b[0m Gived Input  \u001b[90m${new Date().toLocaleString()}\n\u001b[31m%s\u001b[0m\n`,
-				this.lexer.input
+				input
 			);
-		const { input, functions_array } = this.lexer.main(
+		const { input: linput, block } = this.lexer.lex(
+			input,
+			options,
 			isObject(debug) ? debug.lexer : debug
 		);
+		input = linput;
 		if ((isObject(debug) && debug.parsed_input) || debug === true)
 			console.log(
 				`\u001b[44m[ DEBUG ]\u001b[0m Parsed  \u001b[90m${new Date().toLocaleString()}\n\u001b[31m%s\u001b[0m\n`,
@@ -159,27 +180,27 @@ export class Interpreter {
 			console.log(
 				`\u001b[44m[ DEBUG ]\u001b[0m Executions  \u001b[90m${new Date().toLocaleString()}\u001b[34m`
 			);
-		for (const af of functions_array) {
-			const finded = values(Interpreter.functions).find(
-				(f) => f.name_in === af.name || f.name === af.name
+		for (const saf of block) {
+			const finded = Interpreter.functions.find(
+				(f) => f.name_in === saf.name || f.name === saf.name
 			);
 			if (isNil(finded)) continue;
-			if (af.prototype) {
-				if (!finded.prototypes.includes(af.prototype))
+			if (saf.prototype) {
+				if (!finded.prototypes.includes(saf.prototype))
 					throw new AkitaError(
-						`${af.name} doesn't have the prototype "${af.prototype}"`
+						`${saf.name} doesn't have the prototype "${saf.prototype}"`
 					);
 				else if (finded.prototypes.length === 0)
-					throw new AkitaError(`${af.name} doesn't have prototypes`);
+					throw new AkitaError(`${saf.name} doesn't have prototypes`);
 			}
 			if (finded.type === "parent")
 				data.parents?.push(finded.name_in || finded.name);
 			try {
-				data = await finded.solve.apply(this, [af, <object_data>data]);
+				data = await finded.solve.apply(this, [saf, <object_data>data]);
 			} catch (error) {
 				if (finded.name_in === "akita-core:try") {
 					(<object_data["extra"]>data.extra).error = error;
-					data = await finded.solve.apply(this, [af, <object_data>data]);
+					data = await finded.solve.apply(this, [saf, <object_data>data]);
 				} else throw error;
 			}
 			finded.type === "parent" && data.parents?.pop();

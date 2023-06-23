@@ -1,19 +1,20 @@
-import { Interpreter, object_data } from "../../classes/interpreter";
 import {
 	AbstractAkitaFunction,
-	RequiredField,
+	LexerAkitaFunction,
 	requiredFields,
-} from "../../classes/function";
-import { akitaFunction } from "../../classes/lexer";
-import { isNil, set } from "lodash";
+	Interpreter,
+	object_data,
+} from "../../classes/index";
 import Util from "../../classes/util";
+import { isNil, set } from "lodash";
 
 export default class extends AbstractAkitaFunction {
+	name_in = "akita-core:import";
 	name = "import";
 	@requiredFields(2)
 	async solve(
 		this: Interpreter,
-		self: RequiredField<akitaFunction, "fields">,
+		self: LexerAkitaFunction<string>,
 		data: object_data
 	) {
 		await this.solve_fields(data, self);

@@ -1,5 +1,5 @@
 import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
-import { Lexer, default_lexer_options, akitaFunction } from "./lexer";
+import { Lexer, LexerAkitaFunction, type lexer_options } from "./lexer";
 export declare type record = Record<string, unknown>;
 export declare type object_data = record & {
     extra: record & {
@@ -11,7 +11,7 @@ export declare type object_data = record & {
     epd: unknown;
 };
 export declare type InterpreterOptions = {
-    lexer?: typeof default_lexer_options;
+    lexer?: lexer_options;
 };
 export declare type InterpreterDebugOptions = {
     parsed_input?: boolean;
@@ -24,15 +24,15 @@ export declare type InterpreterDebugOptions = {
 };
 export declare class Interpreter {
     readonly options?: InterpreterOptions | undefined;
-    static functions: Record<string, AbstractAkitaFunction>;
+    static functions: Array<AbstractAkitaFunction>;
     readonly lexer: Lexer;
     constructor(options?: InterpreterOptions | undefined);
-    solve_fields(data: object_data, af: akitaFunction, i?: number[], s?: number, e?: number): Promise<akitaFunction>;
-    solve_field(data: object_data, af: akitaFunction, index: number): Promise<akitaFunction>;
+    solve_fields(data: object_data, saf: LexerAkitaFunction<unknown>, i?: number[], s?: number, e?: number): Promise<LexerAkitaFunction<unknown>>;
+    solve_field(data: object_data, saf: LexerAkitaFunction<unknown>, index: number): Promise<LexerAkitaFunction<unknown>>;
     static add_functions(...abs_based_functions: Array<typeof VoidAkitaFunction>): void;
     static load_core_functions(cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
     static load_functions(mod: string, cb?: (t: VoidAkitaFunction) => Promise<VoidAkitaFunction> | VoidAkitaFunction): Promise<void>;
-    resolve<T, D extends object_data>(data: D, af: akitaFunction, rpr: T): void;
-    solve(data: Partial<object_data>, debug?: boolean | InterpreterDebugOptions): Promise<Partial<object_data>>;
+    resolve<T, D extends object_data>(data: D, saf: LexerAkitaFunction<unknown>, rpr: T): void;
+    solve(input: string, options: Partial<lexer_options>, data: Partial<object_data>, debug?: boolean | InterpreterDebugOptions): Promise<Partial<object_data>>;
 }
 //# sourceMappingURL=interpreter.d.ts.map
