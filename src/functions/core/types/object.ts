@@ -1,23 +1,25 @@
 import {
 	AbstractAkitaFunction,
 	LexerAkitaFunction,
-	requiredFields,
 	Interpreter,
 	object_data,
 } from "../../../classes/index";
 import Util, { AkitaError } from "../../../classes/util";
-import { defaults, isNil, isObjectLike } from "lodash";
+import { defaults, isEmpty, isNil, isObjectLike } from "lodash";
 
 export default class extends AbstractAkitaFunction {
 	name_in = "akita-core:object";
 	name = "object";
-	@requiredFields(1)
 	async solve(
 		this: Interpreter,
 		self: LexerAkitaFunction<string>,
 		data: object_data
 	) {
 		await this.solve_fields(data, self);
+		if (isEmpty(self.fields)) {
+			this.resolve(data, self, {});
+			return data;
+		}
 		const obj = Util.parse_object(self.fields[0].value),
 			def = self.fields[1] ? Util.parse_object(self.fields[1].value) : null;
 		if (isNil(obj) || !isObjectLike(obj))
