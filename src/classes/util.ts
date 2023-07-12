@@ -1,7 +1,6 @@
 import { parse, DeserializeOptions } from "hjson";
 import { object_data } from "./interpreter";
 import { Dirent, readdirSync } from "fs";
-import { split } from "lodash";
 import { Lexer } from "./lexer";
 
 export function iterate<T, R>(
@@ -21,14 +20,6 @@ export class AkitaError extends Error {
 	}
 }
 export default class Util {
-	static readonly operators = [
-		/*"===", "!==",*/ "==",
-		"!=",
-		">=",
-		"<=",
-		">",
-		"<",
-	];
 	static readonly falsys = [
 		"",
 		"0",
@@ -51,55 +42,6 @@ export default class Util {
 		} catch (error) {
 			if (!suppress) throw error;
 			return default_value;
-		}
-	}
-	static solve_equal(sentence: string) {
-		return split(sentence, /==/g).every((value, _, self) => self[0] === value);
-	}
-	static solve_unequal(sentence: string) {
-		return split(sentence, /!=/g).every((value, _, self) => self[0] !== value);
-	}
-	static solve_greater(sentence: string) {
-		return split(sentence, />/g)
-			.map((value) => Number(value))
-			.every((value, index, self) =>
-				index == 0 ? true : value > self[index - 1]
-			);
-	}
-	static solve_greater_or_equal(sentence: string) {
-		return split(sentence, />=/g)
-			.map((value) => Number(value))
-			.every((value, index, self) =>
-				index == 0 ? true : value >= self[index - 1]
-			);
-	}
-	static solve_less(sentence: string) {
-		return split(sentence, /</g)
-			.map((value) => Number(value))
-			.every((value, index, self) =>
-				index == 0 ? true : value < self[index - 1]
-			);
-	}
-	static solve_less_or_equal(sentence: string) {
-		return split(sentence, /<=/g)
-			.map((value) => Number(value))
-			.every((value, index, self) =>
-				index == 0 ? true : value <= self[index - 1]
-			);
-	}
-	static solve_condition(sentence: string, suppress = true) {
-		try {
-			if (sentence.includes("==")) return this.solve_equal(sentence);
-			else if (sentence.includes("!=")) return this.solve_unequal(sentence);
-			else if (sentence.includes(">="))
-				return this.solve_greater_or_equal(sentence);
-			else if (sentence.includes("<=")) return this.solve_less_or_equal(sentence);
-			else if (sentence.includes(">")) return this.solve_greater(sentence);
-			else if (sentence.includes("<")) return this.solve_less(sentence);
-			else return this.booleanify(sentence);
-		} catch (error) {
-			if (!suppress) throw error;
-			return false;
 		}
 	}
 	static booleanify(str: string) {

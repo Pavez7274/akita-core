@@ -1,5 +1,6 @@
-import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { Lexer, LexerAkitaFunction, type lexer_options } from "./lexer";
+import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
+import { Reader } from "./reader";
 export declare type record = Record<string, unknown>;
 export declare type object_data = record & {
     extra: record & {
@@ -25,6 +26,7 @@ export declare type InterpreterDebugOptions = {
 export declare class Interpreter {
     readonly options?: InterpreterOptions | undefined;
     static functions: Array<AbstractAkitaFunction>;
+    readonly reader: Reader;
     readonly lexer: Lexer;
     constructor(options?: InterpreterOptions | undefined);
     solve_fields(data: object_data, saf: LexerAkitaFunction<unknown>, i?: number[], s?: number, e?: number): Promise<LexerAkitaFunction<unknown>>;

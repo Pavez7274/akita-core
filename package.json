@@ -20,7 +20,7 @@
 		"@class": "./lib/classes/"
 	},
 	"name": "@kodeko/akita-core",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"main": "lib/index.js",
 	"scripts": {
 		"lint": "eslint --fix .\\src\\",

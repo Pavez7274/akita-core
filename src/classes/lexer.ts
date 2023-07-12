@@ -1,18 +1,6 @@
 import { escapeRegExp, isEmpty, isNil, merge, toLower } from "lodash";
 import { inspect } from "util";
 
-export enum Operators {
-	"==" = "equal",
-	"===" = "strict equal",
-	"!=" = "not equal",
-	"!==" = "strict not equal",
-	">" = "greater",
-	"<" = "lesser",
-	">=" = "greater or equal",
-	"<=" = "lesser or equal",
-	"=" = "assign",
-}
-
 /**
  * Represents a matched function.
  */
@@ -337,7 +325,7 @@ export class Lexer {
 		input = this.resolve(input, options as lexer_options);
 
 		if (debug) console.log("\n", input);
-		
+
 		options = merge(options, this.default_options);
 
 		// Match functions in the input string
@@ -400,28 +388,34 @@ export class Lexer {
 			input.matchAll(Lexer.CONDITION_EXPRESSION),
 			(match) => [match[0], match[1], match[4], match[5]]
 		)) {
+			const type = get_type(symbol);
+			input = input.replace(
+				match,
+				type === "setter"
+					? `akita-core:set${opener + left + argument + right + closer}`
+					: `akita-core:condition${
+							opener + type + argument + left + argument + right + closer
+					  }`
+			);
+		}
+		function get_type(symbol: string) {
 			switch (symbol) {
 				case "==":
-				case "===":
+					return "equal";
 				case "!=":
-				case "!==":
+					return "not equal";
 				case ">":
+					return "greater";
 				case "<":
+					return "lesser";
 				case ">=":
+					return "greater or equal";
 				case "<=":
-					input = input.replace(
-						match,
-						`akita-core:condition(${Operators[symbol]}${argument}${left};${right})`
-					);
-					continue;
+					return "lesser or equal";
 				case "=":
-					input = input.replace(
-						match,
-						`akita-core:set${opener}${left}${argument}${right}${closer}`
-					);
-					continue;
+					return "setter";
 				default:
-					continue;
+					return "unknown";
 			}
 		}
 		return input;
@@ -433,7 +427,7 @@ export class Lexer {
 // lex.set_functions(["hi", "boo", "waaa"]);
 // console.log(
 // 	inspect(
-// 		lex.lex("waaa(boo(asdf;asdf;123);boo) hi").block.map((saf) => saf.toJSON()),
+// 		lex.lex("a == hi").input,
 // 		{ depth: null, colors: true }
 // 	)
 // );

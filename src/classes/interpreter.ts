@@ -1,8 +1,9 @@
-import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { Lexer, LexerAkitaFunction, type lexer_options } from "./lexer";
+import { AbstractAkitaFunction, VoidAkitaFunction } from "./function";
 import { isEmpty, isNil, isObject, merge } from "lodash";
 import Util, { AkitaError } from "./util";
 import { akita_functions_mod } from "..";
+import { Reader } from "./reader";
 import { inspect } from "util";
 
 export type record = Record<string, unknown>;
@@ -49,8 +50,10 @@ export type InterpreterDebugOptions = {
 
 export class Interpreter {
 	static functions: Array<AbstractAkitaFunction> = [];
+	public readonly reader: Reader;
 	public readonly lexer: Lexer;
 	constructor(readonly options?: InterpreterOptions) {
+		this.reader = new Reader(this);
 		this.lexer = new Lexer(options?.lexer);
 		this.lexer.set_functions(
 			Interpreter.functions

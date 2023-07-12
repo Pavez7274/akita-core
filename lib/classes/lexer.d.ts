@@ -1,14 +1,3 @@
-export declare enum Operators {
-    "==" = "equal",
-    "===" = "strict equal",
-    "!=" = "not equal",
-    "!==" = "strict not equal",
-    ">" = "greater",
-    "<" = "lesser",
-    ">=" = "greater or equal",
-    "<=" = "lesser or equal",
-    "=" = "assign"
-}
 export interface matchedFunction {
     prototype?: string;
     position: number;

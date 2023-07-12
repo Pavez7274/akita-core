@@ -18,14 +18,16 @@ export default class extends AbstractAkitaFunction {
 		data: object_data
 	) {
 		await this.solve_fields(data, self);
-		const r = Util.parse_object(self.fields[1].value);
+		const [key, mod] = self.fields.map(({ value }) => value);
+		const r = Util.parse_object(key);
+		const imported = mod.endsWith(".akita")
+			? await this.reader.run_file(mod)
+			: await import(mod);
 		if (isNil(r)) {
-			const x = await import(self.fields[1].value);
-			set(data.extra.variables, self.fields[0].value, x);
+			set(data.extra.variables, key, imported);
 		} else {
-			const x = await import(self.fields[1].value);
-			for (const key in r) {
-				set(data.extra.variables, key, x[key]);
+			for (const prop in r) {
+				set(data.extra.variables, prop, imported[key]);
 			}
 		}
 		this.resolve(data, self, void 0);
